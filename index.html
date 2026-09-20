@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SkyShield — Радар Безпеки</title>
+  
+  <!-- Leaflet CSS & Telegram WebApp Script -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.92);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-yellow: #eab308;
+      --accent-orange: #f97316;
+      --accent-red: #ef4444;
+      --accent-primary: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-color: #0b1120;
+    }
+
+    .leaflet-container {
+      background-color: #0b1120 !important;
+    }
+
+    /* Dark theme applied only to OSM tiles */
+    .osm-dark-tiles {
+      filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    }
+
+    /* Shift map controls below top header banner */
+    .leaflet-top.leaflet-right {
+      top: 68px;
+    }
+
+    .leaflet-control-layers {
+      background: var(--card-bg) !important;
+      color: var(--text-main) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 10px !important;
+      font-size: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+    }
+
+    .leaflet-control-layers-expanded {
+      padding: 10px 14px !important;
+      backdrop-filter: blur(12px);
+    }
+
+    .leaflet-control-layers label {
+      margin-bottom: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .leaflet-control-zoom a {
+      background: var(--card-bg) !important;
+      color: var(--text-main) !important;
+      border-color: var(--border-color) !important;
+    }
+
+    /* Floating Header */
+    .app-header {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 620px;
+      z-index: 1000;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .brand-badge {
+      font-size: 11px;
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    /* Preset switcher */
+    .preset-selector {
+      display: flex;
+      gap: 6px;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn.active {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }
+
+    /* Floating Bottom Panel */
+    .control-panel {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      max-width: 620px;
+      z-index: 1000;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .panel-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .slider-group {
+      margin-bottom: 12px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .slider-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .radius-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-yellow {
+      background: rgba(234, 179, 8, 0.22);
+      color: #facc15;
+      border: 1px solid rgba(234, 179, 8, 0.5);
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+    }
+
+    .badge-orange {
+      background: rgba(249, 115, 22, 0.22);
+      color: #fb923c;
+      border: 1px solid rgba(249, 115, 22, 0.5);
+      box-shadow: 0 0 10px rgba(249, 115, 22, 0.25);
+    }
+
+    .badge-red {
+      background: rgba(239, 68, 68, 0.22);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 10px rgba(239, 68, 68, 0.25);
+    }
+
+    .badge-right {
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .label-yellow { color: #facc15; font-weight: 600; }
+    .label-orange { color: #fb923c; font-weight: 600; }
+    .label-red { color: #f87171; font-weight: 600; }
+
+    .slider-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #cbd5e1;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: serif;
+      line-height: 1;
+      padding: 0;
+    }
+
+    .info-btn:hover {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+      transform: scale(1.12);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+
+    .info-btn-all {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+
+    .info-btn-all:hover {
+      background: var(--accent-primary);
+      color: #fff;
+    }
+
+    /* Information Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(11, 17, 32, 0.85);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-window {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.open .modal-window {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(30, 41, 59, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      border-color: #ef4444;
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 10px 20px;
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .modal-tab {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .modal-tab:hover, .modal-tab.active {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .threat-card {
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.4);
+    }
+
+    .threat-card.card-yellow {
+      border-color: rgba(234, 179, 8, 0.45);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(42, 33, 6, 0.4));
+    }
+
+    .threat-card.card-orange {
+      border-color: rgba(249, 115, 22, 0.45);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(46, 20, 5, 0.4));
+    }
+
+    .threat-card.card-red {
+      border-color: rgba(239, 68, 68, 0.45);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(43, 11, 11, 0.4));
+    }
+
+    .threat-card.card-bypass {
+      border-color: #a855f7;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(46, 16, 77, 0.5));
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    .threat-list {
+      list-style: none;
+      font-size: 12.5px;
+      color: #e2e8f0;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .threat-list li {
+      position: relative;
+      padding-left: 14px;
+      margin-bottom: 3px;
+    }
+
+    .threat-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+    }
+
+    .card-rule {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 8px;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    /* Tactical TTX Reaction Time Toast (Above bottom panel) */
+    .ttx-toast {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 0;
+      right: 0;
+      background: #0f172a; /* Solid opaque background */
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+      border: 1.5px solid var(--border-color);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, background 0.25s ease;
+      pointer-events: none;
+      z-index: 1002;
+    }
+
+    .ttx-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .ttx-toast.theme-yellow {
+      border-color: #eab308;
+      background: linear-gradient(135deg, #09121f 0%, #291f06 100%);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(234, 179, 8, 0.25);
+    }
+
+    .ttx-toast.theme-orange {
+      border-color: #f97316;
+      background: linear-gradient(135deg, #09121f 0%, #2e1405 100%);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(249, 115, 22, 0.25);
+    }
+
+    .ttx-toast.theme-red {
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #09121f 0%, #2b0b0b 100%);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(239, 68, 68, 0.25);
+    }
+
+    .ttx-icon {
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      animation: pulse-icon 1.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse-icon {
+      from { transform: scale(0.95); opacity: 0.85; }
+      to { transform: scale(1.15); opacity: 1; }
+    }
+
+    .ttx-content {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .ttx-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .ttx-badge {
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 1px 7px;
+      border-radius: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .ttx-toast.theme-yellow .ttx-badge {
+      color: #facc15;
+      background: rgba(234, 179, 8, 0.25);
+      border: 1px solid rgba(234, 179, 8, 0.5);
+    }
+
+    .ttx-toast.theme-orange .ttx-badge {
+      color: #fb923c;
+      background: rgba(249, 115, 22, 0.25);
+      border: 1px solid rgba(249, 115, 22, 0.5);
+    }
+
+    .ttx-toast.theme-red .ttx-badge {
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+    }
+
+    .ttx-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .ttx-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .ttx-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(0,0,0,0.5);
+    }
+
+    .btn-save {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent-primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+
+    .btn-save:hover {
+      background: #2563eb;
+    }
+
+    .btn-save.saved {
+      background: #10b981 !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5) !important;
+    }
+
+    /* Save Success Toast */
+    .save-toast {
+      position: fixed;
+      top: 65px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-25px);
+      background: #0f172a;
+      border: 1.5px solid #10b981;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(16, 185, 129, 0.4);
+      border-radius: 14px;
+      padding: 12px 18px;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 90%;
+    }
+
+    .save-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .save-toast-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .save-toast-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .save-toast-desc {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* Radar Pulse Marker */
+    .radar-pin {
+      position: relative;
+      width: 16px;
+      height: 16px;
+      background: #38bdf8;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #38bdf8;
+    }
+
+    .radar-pulse {
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.4);
+      animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.3); opacity: 0.8; }
+      80%, 100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .info-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="brand-title">
+      🛡 SkyShield
+      <span class="brand-badge">Фільтр реальних загроз</span>
+    </div>
+    <div class="preset-selector">
+      <button class="preset-btn active" onclick="selectPreset('home')">🏠 Дім</button>
+      <button class="preset-btn" onclick="selectPreset('work')">💼 Робота</button>
+    </div>
+  </div>
+
+  <!-- Save Success Toast Notification -->
+  <div id="save-success-toast" class="save-toast">
+    <div class="save-toast-icon">✅</div>
+    <div>
+      <div class="save-toast-title">Позицію та радіуси успішно збережено!</div>
+      <div id="save-toast-desc" class="save-toast-desc">Координати та зони безпеки зафіксовано</div>
+    </div>
+  </div>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Bottom Control Panel -->
+  <div class="control-panel">
+    <!-- Floating TTX Estimation Toast (above panel) -->
+    <div id="ttx-toast" class="ttx-toast" onmouseenter="pauseTTXTimer()" onmouseleave="resumeTTXTimer()">
+      <div id="ttx-icon" class="ttx-icon">⏱</div>
+      <div class="ttx-content">
+        <div class="ttx-title">
+          <span id="ttx-label">Час реакції на загрозу:</span>
+          <span id="ttx-time" class="ttx-badge">~5 хв</span>
+        </div>
+        <div id="ttx-desc" class="ttx-desc">
+          ТТХ: Ударні БПЛА (Шахед, Італмас, ~180 км/год) при прямому векторі на радіус 15 км
+        </div>
+      </div>
+      <button class="ttx-close" onclick="hideTTXToast()" title="Закрити">✕</button>
+    </div>
+
+    <div class="panel-row">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 14px; font-weight: 600;">Налаштування зон безпеки</span>
+        <button class="info-btn-all" onclick="openInfoModal('all')" title="Повний довідник загроз">ℹ️ Довідник загроз</button>
+      </div>
+      <span id="coords-text" style="font-size: 12px; color: var(--text-muted);">50.0570, 36.2030</span>
+    </div>
+
+    <!-- Yellow Zone: Tactical UAV (Molniya, FPV, Lancet) -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-left">
+          <span>🟡</span>
+          <span class="radius-badge badge-yellow"><span id="val-yellow">7</span> км</span>
+          <span class="label-yellow">радіус загрози: <b>Ближня</b> (Молнія, FPV, Ланцет)</span>
+        </div>
+        <div class="slider-right">
+          <button class="info-btn" onclick="openInfoModal('yellow')" title="Опис загроз Ближньої зони">i</button>
+          <span id="val-yellow-time" class="badge-right">⏱ ~4 хв 40 сек</span>
+        </div>
+      </div>
+      <input type="range" id="range-yellow" min="3" max="15" value="7" oninput="updateRadii('yellow')">
+    </div>
+
+    <!-- Orange Zone: Standard UAV (Shahed / Gerbera / Italmas) -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-left">
+          <span>🟠</span>
+          <span class="radius-badge badge-orange"><span id="val-orange">15</span> км</span>
+          <span class="label-orange">радіус загрози: <b>Ударні БПЛА</b> (Шахед, Італмас, Гербера)</span>
+        </div>
+        <div class="slider-right">
+          <button class="info-btn" onclick="openInfoModal('orange')" title="Опис загроз Ударних БПЛА">i</button>
+          <span id="val-orange-time" class="badge-right">⏱ ~5 хв</span>
+        </div>
+      </div>
+      <input type="range" id="range-orange" min="8" max="25" value="15" oninput="updateRadii('orange')">
+    </div>
+
+    <!-- Red Zone: Fast UAV / KAB -->
+    <div class="slider-group">
+      <div class="slider-header">
+        <div class="slider-left">
+          <span>🔴</span>
+          <span class="radius-badge badge-red"><span id="val-red">30</span> км</span>
+          <span class="label-red">радіус загрози: <b>Швидкісні цілі</b> (Реактивні БПЛА, КАБ)</span>
+        </div>
+        <div class="slider-right">
+          <button class="info-btn" onclick="openInfoModal('red')" title="Опис Швидкісних цілей">i</button>
+          <span id="val-red-time" class="badge-right">⏱ ~3 хв 36 сек</span>
+        </div>
+      </div>
+      <input type="range" id="range-red" min="20" max="50" value="30" oninput="updateRadii('red')">
+    </div>
+
+    <button class="btn-save" onclick="saveSettings()">
+      💾 Зберегти позицію та радіуси
+    </button>
+    <div class="info-tag">💡 Натисніть у будь-яку точку карти або перетягніть маркер</div>
+  </div>
+
+  <!-- Threat Classification Info Modal -->
+  <div id="info-modal" class="modal-backdrop" onclick="handleBackdropClick(event)">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🛡</span>
+          <span>Класифікація загроз SkyShield</span>
+        </div>
+        <button class="modal-close" onclick="closeInfoModal()" title="Закрити">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="all" onclick="filterModalTab('all')">Всі категорії</button>
+        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Ближня зона</button>
+        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Ударні БПЛА</button>
+        <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">🔴 Швидкісні цілі</button>
+        <button class="modal-tab" data-tab="bypass" onclick="filterModalTab('bypass')">⚡ Поза зонами (Критичні)</button>
+      </div>
+      <div class="modal-body" id="modal-cards-container">
+        
+        <!-- Yellow Card -->
+        <div class="threat-card card-yellow" data-category="yellow">
+          <div class="card-header">
+            <span class="card-title" style="color: #facc15;">🟡 Ближня зона (Тактичні БПЛА)</span>
+            <span class="card-meta">Швидкість: ~90 км/год (~1.5 км/хв)</span>
+          </div>
+          <ul class="threat-list">
+            <li><b>БПЛА «Молнія»</b> — швидкісний тактичний ударний дрон літакового типу</li>
+            <li><b>FPV-дрони</b> — маневрені баражуючі квадрокоптери з бойовою частиною</li>
+            <li><b>БПЛА «Ланцет»</b> — високоточний баражуючий боєприпас тактичної ланки</li>
+            <li><b>Розвідувальні БПЛА</b> — Zala, Supercam, Орлан-10/30, Мерлін</li>
+          </ul>
+          <div class="card-rule">
+            🎯 <b>Правило спрацювання:</b> Сповіщення надсилається <b>тільки</b> при підтвердженому вході цілі або векторі руху в заданий радіус (за замовчуванням <b>7 км</b>). Дальні польоти по області ігноруються.
+          </div>
+        </div>
+
+        <!-- Orange Card -->
+        <div class="threat-card card-orange" data-category="orange">
+          <div class="card-header">
+            <span class="card-title" style="color: #fb923c;">🟠 Ударні БПЛА дальньої дії</span>
+            <span class="card-meta">Швидкість: ~180 км/год (~3 км/хв)</span>
+          </div>
+          <ul class="threat-list">
+            <li><b>БПЛА «Шахед-136» (Герань-2)</b> — стратегічний ударний безпілотник-камікадзе</li>
+            <li><b>БПЛА «Італмас» (Герань-3)</b> — баражуючий дрон середньої дальності з двигуном DLE</li>
+            <li><b>БПЛА «Гербера» / «Пародія»</b> — ударні дрони та дрони-приманки для виснаження ППО</li>
+            <li><b>БПЛА невстановленого типу</b> — ударні крилаті апарати дального радіусу</li>
+          </ul>
+          <div class="card-rule">
+            🎯 <b>Правило спрацювання:</b> Моніторинг ведеться у заданому радіусі (за замовчуванням <b>15 км</b>). Якщо «шахед» рухається транзитом повз місто (наприклад, через Валки на Полтаву чи Суми) — бот <b>відсікає шум</b> і не турбує.
+          </div>
+        </div>
+
+        <!-- Red Card -->
+        <div class="threat-card card-red" data-category="red">
+          <div class="card-header">
+            <span class="card-title" style="color: #f87171;">🔴 Швидкісні цілі</span>
+            <span class="card-meta">Швидкість: ~500–600 км/год (~8.3–10 км/хв)</span>
+          </div>
+          <ul class="threat-list">
+            <li><b>Реактивні БПЛА</b> — безпілотники з турбореактивним двигуном підвищеної швидкості</li>
+            <li><b>БПЛА «Бандероль»</b> — реактивні швидкісні ударні дрони</li>
+            <li><b>КАБ / УМПБ Д-30</b> — керовані авіаційні бомби та планеруючі боєприпаси тактичної авіації</li>
+          </ul>
+          <div class="card-rule">
+            🎯 <b>Правило спрацювання:</b> Радіус реагування (за замовчуванням <b>30 км</b>). Час підльоту з моменту виявлення — від <b>2 до 4 хвилин</b>.
+          </div>
+        </div>
+
+        <!-- Bypass Card (Out of zones) -->
+        <div class="threat-card card-bypass" data-category="bypass">
+          <div class="card-header">
+            <span class="card-title" style="color: #c084fc;">⚡ ПОЗА ЗОНАМИ: Критичні загрози (Попередження ЗАВЖДИ)</span>
+            <span class="card-meta" style="background: rgba(168, 85, 247, 0.25); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.5);">ПОВНИЙ БАЙПАС РАДІУСІВ</span>
+          </div>
+          <ul class="threat-list">
+            <li><b>Балістичні ракети:</b> «Іскандер-М», KN-23 (швидкість >6000 км/год, час підльоту до Харкова ~60–90 сек)</li>
+            <li><b>ЗРК у режимі «земля-земля»:</b> С-300 / С-400 (підльот за 40–80 секунд з прикордоння)</li>
+            <li><b>Аеробалістика та гіперзвук:</b> Х-47М2 «Кинджал», 3М22 «Циркон»</li>
+            <li><b>РСЗВ (Торнадо-С, Смерч, Ураган):</b> загроза обстрілу міста або безпосередньо обраного вами сектора</li>
+            <li><b>Директиви екстреної небезпеки:</b> загальноміські (<i>«Харків — в укриття»</i>, <i>«Всі в укриття»</i>), а також локальні виклики (<i>«[Ваш район / сектор] — в укриття»</i>), які бот динамічно прив'язує до встановленої вами точки на карті (Олексіївка, ХТЗ, Салтівка, Холодна Гора, Центр тощо).</li>
+          </ul>
+          <div class="card-rule" style="border-top-color: rgba(168, 85, 247, 0.3); color: #e2e8f0;">
+            🚨 <b>Протокол пусків з прикордоння:</b><br>
+            • Сигнали про виходи/пуски: <i>«вихід з БНР / Бєлгорода», «швидкісна з Бєлгорода», «вихід з Курська», «вихід з Воронежа», «вихід з Міллерово»</i> — <b>ЗАВЖДИ викликають негайну тривогу</b>, якщо напрямок не вказано або веде на Харків / область.<br>
+            • <b>Фільтр відсікання інших міст:</b> Якщо в повідомленні чітко зазначено вектор на інші регіони (<i>«вихід з Бєлгорода на Дніпро», «на Полтаву», «на Київ», «на Суми»</i> тощо) — бот <b>не турбує</b> хибними тривогами.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <script>
+    // Initial coordinates: Алексеевка, ст. м. Победа
+    let userCoords = [50.0570, 36.2030];
+    let presets = {
+      home: { coords: [50.0570, 36.2030], yellow: 7, orange: 15, red: 30 },
+      work: { coords: [49.9450, 36.3750], yellow: 5, orange: 12, red: 25 } // ХТЗ
+    };
+    let currentPreset = 'home';
+
+    // Initialize Map
+    const map = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView(userCoords, 12);
+
+    // Base Tile Layers (No API keys, no 403 blocks for local files)
+    const osmDark = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      className: 'osm-dark-tiles',
+      attribution: '© OpenStreetMap'
+    });
+
+    const esriDark = L.layerGroup([
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 })
+    ]);
+
+    const esriSatellite = L.layerGroup([
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+    ]);
+
+    // Add default radar layer
+    osmDark.addTo(map);
+
+    // Zoom and Layer controls
+    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.layers({
+      "🗺 Радар (OSM Dark)": osmDark,
+      "🏙 Esri Dark Canvas": esriDark,
+      "🛰 Супутник (Satellite)": esriSatellite
+    }, null, { position: 'topright' }).addTo(map);
+
+    // Custom Pulsing Radar Marker
+    const radarIcon = L.divIcon({
+      className: 'custom-radar-icon',
+      html: '<div class="radar-pulse"></div><div class="radar-pin"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8]
+    });
+
+    let homeMarker = L.marker(userCoords, { icon: radarIcon, draggable: true }).addTo(map);
+
+    // Concentric Safety Circles: Yellow (Tactical), Orange (Standard UAV), Red (High Speed / KAB)
+    let circleYellow = L.circle(userCoords, {
+      radius: 7000,
+      color: '#eab308',
+      fillColor: '#eab308',
+      fillOpacity: 0.12,
+      weight: 1.6
+    }).addTo(map);
+
+    let circleOrange = L.circle(userCoords, {
+      radius: 15000,
+      color: '#f97316',
+      fillColor: '#f97316',
+      fillOpacity: 0.08,
+      weight: 1.8
+    }).addTo(map);
+
+    let circleRed = L.circle(userCoords, {
+      radius: 30000,
+      color: '#ef4444',
+      fillColor: '#ef4444',
+      fillOpacity: 0.04,
+      weight: 1.4,
+      dashArray: '5, 5'
+    }).addTo(map);
+
+    // Update positions and text
+    function updatePositions(newCoords) {
+      userCoords = newCoords;
+      homeMarker.setLatLng(newCoords);
+      circleYellow.setLatLng(newCoords);
+      circleOrange.setLatLng(newCoords);
+      circleRed.setLatLng(newCoords);
+      document.getElementById('coords-text').innerText = `${newCoords[0].toFixed(4)}, ${newCoords[1].toFixed(4)}`;
+    }
+
+    // Drag marker event
+    homeMarker.on('dragend', function (e) {
+      const pos = e.target.getLatLng();
+      updatePositions([pos.lat, pos.lng]);
+    });
+
+    // Click map event
+    map.on('click', function(e) {
+      updatePositions([e.latlng.lat, e.latlng.lng]);
+    });
+
+    // TTX Specifications and calculation
+    const threatTTX = {
+      yellow: {
+        title: 'Ближні БПЛА (Молнія, FPV, Ланцет)',
+        avgSpeed: 90, // km/h
+        speedLabel: '~90 км/год',
+        emoji: '🟡'
+      },
+      orange: {
+        title: 'Ударні БПЛА (Шахед-136, Італмас, Гербера)',
+        avgSpeed: 180, // km/h
+        speedLabel: '~180 км/год',
+        emoji: '🟠'
+      },
+      red: {
+        title: 'Швидкісні цілі (Реактивні БПЛА, КАБ)',
+        avgSpeed: 500, // km/h
+        speedLabel: '~500 км/год',
+        emoji: '🔴'
+      }
+    };
+
+    let ttxTimer = null;
+
+    function formatTimeEstimate(radiusKm, speedKmH) {
+      const totalMinutes = (radiusKm / speedKmH) * 60;
+      const mins = Math.floor(totalMinutes);
+      const secs = Math.round((totalMinutes - mins) * 60);
+
+      if (mins === 0) {
+        return `~${secs} сек`;
+      } else if (secs === 0 || secs >= 50) {
+        const roundedMins = secs >= 50 ? mins + 1 : mins;
+        return `~${roundedMins} хв`;
+      } else {
+        return `~${mins} хв ${secs} сек`;
+      }
+    }
+
+    const TTX_READ_TIME_MS = 15000; // 15 seconds of idle time to comfortably read
+
+    function showTTXToast(zone) {
+      if (!zone || !threatTTX[zone]) return;
+      const ttx = threatTTX[zone];
+      const radiusKm = parseInt(document.getElementById(`range-${zone}`).value);
+      const timeStr = formatTimeEstimate(radiusKm, ttx.avgSpeed);
+
+      const toast = document.getElementById('ttx-toast');
+      toast.className = `ttx-toast visible theme-${zone}`;
+      
+      document.getElementById('ttx-icon').innerText = '⏱';
+      document.getElementById('ttx-label').innerText = `${ttx.emoji} Час реакції на загрозу приблизно:`;
+      document.getElementById('ttx-time').innerText = timeStr;
+      document.getElementById('ttx-desc').innerHTML = 
+        `Розраховано за ТТХ: <b>${ttx.title}</b> (крейсерська швидкість <b>${ttx.speedLabel}</b>) при прямому курсі на радіус <b>${radiusKm} км</b>`;
+
+      // Cancel any previous timer immediately and give 15s if no other slider is touched
+      clearTimeout(ttxTimer);
+      ttxTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, TTX_READ_TIME_MS);
+    }
+
+    function pauseTTXTimer() {
+      clearTimeout(ttxTimer);
+    }
+
+    function resumeTTXTimer() {
+      clearTimeout(ttxTimer);
+      ttxTimer = setTimeout(() => {
+        document.getElementById('ttx-toast').classList.remove('visible');
+      }, 8000); // 8 seconds grace period after mouse leaves
+    }
+
+    function hideTTXToast() {
+      const toast = document.getElementById('ttx-toast');
+      if (toast) toast.classList.remove('visible');
+      clearTimeout(ttxTimer);
+    }
+
+    // Slider inputs
+    function updateRadii(activeZone) {
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+
+      document.getElementById('val-yellow').innerText = y;
+      document.getElementById('val-orange').innerText = o;
+      document.getElementById('val-red').innerText = r;
+
+      // Right-edge badge displays approximate approach time!
+      document.getElementById('val-yellow-time').innerText = `⏱ ${formatTimeEstimate(y, threatTTX.yellow.avgSpeed)}`;
+      document.getElementById('val-orange-time').innerText = `⏱ ${formatTimeEstimate(o, threatTTX.orange.avgSpeed)}`;
+      document.getElementById('val-red-time').innerText = `⏱ ${formatTimeEstimate(r, threatTTX.red.avgSpeed)}`;
+
+      circleYellow.setRadius(y * 1000);
+      circleOrange.setRadius(o * 1000);
+      circleRed.setRadius(r * 1000);
+
+      if (activeZone) {
+        showTTXToast(activeZone);
+      }
+    }
+
+    // Switch presets
+    function selectPreset(name) {
+      currentPreset = name;
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const p = presets[name];
+      document.getElementById('range-yellow').value = p.yellow;
+      document.getElementById('range-orange').value = p.orange;
+      document.getElementById('range-red').value = p.red;
+      updateRadii('orange');
+      updatePositions(p.coords);
+      map.panTo(p.coords);
+    }
+
+    // Save configuration
+    function saveSettings() {
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+      const config = {
+        preset: currentPreset,
+        coordinates: userCoords,
+        radii_km: {
+          tactical_yellow: y,
+          standard_orange: o,
+          fast_red: r
+        }
+      };
+
+      // Store in localStorage
+      localStorage.setItem('skyshield_user_config', JSON.stringify(config));
+
+      // Visual feedback on save button
+      const btn = document.querySelector('.btn-save');
+      const origText = btn.innerHTML;
+      btn.classList.add('saved');
+      btn.innerHTML = '✅ Збережено успішно!';
+
+      // Show prominent on-screen toast
+      const toast = document.getElementById('save-success-toast');
+      const descEl = document.getElementById('save-toast-desc');
+      if (descEl) {
+        descEl.innerText = `Точка: ${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} км, 🟠 ${o} км, 🔴 ${r} км`;
+      }
+      if (toast) {
+        toast.classList.add('visible');
+      }
+
+      setTimeout(() => {
+        btn.classList.remove('saved');
+        btn.innerHTML = origText;
+      }, 3500);
+
+      setTimeout(() => {
+        if (toast) toast.classList.remove('visible');
+      }, 4500);
+
+      // Send to local SkyShield Bot API if available
+      fetch('http://127.0.0.1:8080/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      }).then(r => r.json()).then(res => {
+        console.log('Successfully synced with SkyShield Bot:', res);
+      }).catch(err => {
+        // Normal if opened offline or bot webserver not active
+        console.log('Local bot API not active:', err);
+      });
+
+      // If inside Telegram WebApp, send data back to bot
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData) {
+        setTimeout(() => {
+          try {
+            window.Telegram.WebApp.sendData(JSON.stringify(config));
+            window.Telegram.WebApp.close();
+          } catch(e) {
+            console.log('Telegram WebApp error:', e);
+          }
+        }, 1200);
+      }
+    }
+
+    // Information Modal Dialog Logic
+    function openInfoModal(targetCategory) {
+      const modal = document.getElementById('info-modal');
+      modal.classList.add('open');
+      filterModalTab(targetCategory || 'all');
+    }
+
+    function closeInfoModal() {
+      const modal = document.getElementById('info-modal');
+      modal.classList.remove('open');
+    }
+
+    function handleBackdropClick(e) {
+      if (e.target.id === 'info-modal') {
+        closeInfoModal();
+      }
+    }
+
+    function filterModalTab(category) {
+      document.querySelectorAll('.modal-tab').forEach(tab => {
+        if (tab.getAttribute('data-tab') === category) {
+          tab.classList.add('active');
+        } else {
+          tab.classList.remove('active');
+        }
+      });
+
+      const cards = document.querySelectorAll('.threat-card');
+      cards.forEach(card => {
+        if (category === 'all' || card.getAttribute('data-category') === category) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      const container = document.getElementById('modal-cards-container');
+      if (container) container.scrollTop = 0;
+    }
+
+    // Keyboard ESC key handler to close modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeInfoModal();
+      }
+    });
+
+    // Fetch saved settings from SkyShield Bot if available
+    fetch('http://127.0.0.1:8080/api/config')
+      .then(res => res.json())
+      .then(cfg => {
+        if (cfg && cfg.coordinates) {
+          updatePositions([cfg.coordinates[0], cfg.coordinates[1]]);
+          map.setView([cfg.coordinates[0], cfg.coordinates[1]], 12);
+        }
+        if (cfg && cfg.radii_km) {
+          if (cfg.radii_km.tactical_yellow) {
+            document.getElementById('slider-yellow').value = cfg.radii_km.tactical_yellow;
+            updateCircle('yellow', cfg.radii_km.tactical_yellow);
+          }
+          if (cfg.radii_km.standard_orange) {
+            document.getElementById('slider-orange').value = cfg.radii_km.standard_orange;
+            updateCircle('orange', cfg.radii_km.standard_orange);
+          }
+          if (cfg.radii_km.fast_red) {
+            document.getElementById('slider-red').value = cfg.radii_km.fast_red;
+            updateCircle('red', cfg.radii_km.fast_red);
+          }
+        }
+      })
+      .catch(() => {
+        // Fallback to defaults if running standalone
+      });
+
+    // Notify Telegram that WebApp is ready
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+  </script>
+</body>
+</html>
