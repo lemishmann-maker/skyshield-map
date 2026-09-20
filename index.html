@@ -797,32 +797,32 @@
       <span id="coords-text" style="font-size: 12px; color: var(--text-muted);">50.0570, 36.2030</span>
     </div>
 
-    <!-- Yellow Zone: Tactical UAV (Molniya, FPV, Lancet) -->
+    <!-- Yellow Zone: Small Strike UAV (Molniya, FPV, Lancet) -->
     <div class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
           <span>🟡</span>
           <span class="radius-badge badge-yellow"><span id="val-yellow">7</span> км</span>
-          <span class="label-yellow">радіус загрози: <b>Ближня</b> (Молнія, FPV, Ланцет)</span>
+          <span class="label-yellow">радіус загрози: <b>Малі ударні БПЛА</b> (Молнія, FPV, Ланцет)</span>
         </div>
         <div class="slider-right">
-          <button class="info-btn" onclick="openInfoModal('yellow')" title="Опис загроз Ближньої зони">i</button>
+          <button class="info-btn" onclick="openInfoModal('yellow')" title="Опис Малих ударних БПЛА">i</button>
           <span id="val-yellow-time" class="badge-right">⏱ ~4 хв 40 сек</span>
         </div>
       </div>
       <input type="range" id="range-yellow" min="3" max="15" value="7" oninput="updateRadii('yellow')">
     </div>
 
-    <!-- Orange Zone: Standard UAV (Shahed / Gerbera / Italmas) -->
+    <!-- Orange Zone: Long-range Strike UAV (Shahed / Geran / Gerbera) -->
     <div class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
           <span>🟠</span>
           <span class="radius-badge badge-orange"><span id="val-orange">15</span> км</span>
-          <span class="label-orange">радіус загрози: <b>Ударні БПЛА</b> (Шахед, Італмас, Гербера)</span>
+          <span class="label-orange">радіус загрози: <b>Дальні ударні БПЛА</b> (Шахед, Герань, Гербера)</span>
         </div>
         <div class="slider-right">
-          <button class="info-btn" onclick="openInfoModal('orange')" title="Опис загроз Ударних БПЛА">i</button>
+          <button class="info-btn" onclick="openInfoModal('orange')" title="Опис Дальніх ударних БПЛА">i</button>
           <span id="val-orange-time" class="badge-right">⏱ ~5 хв</span>
         </div>
       </div>
@@ -863,8 +863,8 @@
       </div>
       <div class="modal-tabs">
         <button class="modal-tab active" data-tab="all" onclick="filterModalTab('all')">Всі категорії</button>
-        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Ближня зона</button>
-        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Ударні БПЛА</button>
+        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Малі ударні БПЛА</button>
+        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Дальні ударні БПЛА</button>
         <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">🔴 Швидкісні цілі</button>
         <button class="modal-tab" data-tab="bypass" onclick="filterModalTab('bypass')">⚡ Поза зонами (Критичні)</button>
       </div>
@@ -873,7 +873,7 @@
         <!-- Yellow Card -->
         <div class="threat-card card-yellow" data-category="yellow">
           <div class="card-header">
-            <span class="card-title" style="color: #facc15;">🟡 Ближня зона (Тактичні БПЛА)</span>
+            <span class="card-title" style="color: #facc15;">🟡 Малі ударні БПЛА (Молнія, FPV, Ланцет)</span>
             <span class="card-meta">Швидкість: ~90 км/год (~1.5 км/хв)</span>
           </div>
           <ul class="threat-list">
@@ -890,7 +890,7 @@
         <!-- Orange Card -->
         <div class="threat-card card-orange" data-category="orange">
           <div class="card-header">
-            <span class="card-title" style="color: #fb923c;">🟠 Ударні БПЛА дальньої дії</span>
+            <span class="card-title" style="color: #fb923c;">🟠 Дальні ударні БПЛА (Шахед, Герань, Гербера)</span>
             <span class="card-meta">Швидкість: ~180 км/год (~3 км/хв)</span>
           </div>
           <ul class="threat-list">
@@ -1050,13 +1050,13 @@
     // TTX Specifications and calculation
     const threatTTX = {
       yellow: {
-        title: 'Ближні БПЛА (Молнія, FPV, Ланцет)',
+        title: 'Малі ударні БПЛА (Молнія, FPV, Ланцет)',
         avgSpeed: 90, // km/h
         speedLabel: '~90 км/год',
         emoji: '🟡'
       },
       orange: {
-        title: 'Ударні БПЛА (Шахед-136, Італмас, Гербера)',
+        title: 'Дальні ударні БПЛА (Шахед, Герань, Гербера)',
         avgSpeed: 180, // km/h
         speedLabel: '~180 км/год',
         emoji: '🟠'
