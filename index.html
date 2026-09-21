@@ -803,7 +803,7 @@
         <div class="slider-left">
           <span>🟡</span>
           <span class="radius-badge badge-yellow"><span id="val-yellow">7</span> км</span>
-          <span class="label-yellow">радіус загрози: <b>Малі ударні БПЛА</b> (Молнія, FPV, Ланцет)</span>
+          <span class="label-yellow">радіус реакції: <b>Малошвидкісні цілі</b> (~90 км/год)</span>
         </div>
         <div class="slider-right">
           <button class="info-btn" onclick="openInfoModal('yellow')" title="Опис Малих ударних БПЛА">i</button>
@@ -819,7 +819,7 @@
         <div class="slider-left">
           <span>🟠</span>
           <span class="radius-badge badge-orange"><span id="val-orange">15</span> км</span>
-          <span class="label-orange">радіус загрози: <b>Дальні ударні БПЛА</b> (Шахед, Герань, Гербера)</span>
+          <span class="label-orange">радіус реакції: <b>Середньошвидкісні цілі</b> (~180 км/год)</span>
         </div>
         <div class="slider-right">
           <button class="info-btn" onclick="openInfoModal('orange')" title="Опис Дальніх ударних БПЛА">i</button>
@@ -835,7 +835,7 @@
         <div class="slider-left">
           <span>🔴</span>
           <span class="radius-badge badge-red"><span id="val-red">30</span> км</span>
-          <span class="label-red">радіус загрози: <b>Швидкісні цілі</b> (Реактивні БПЛА, КАБ)</span>
+          <span class="label-red">радіус реакції: <b>Високошвидкісні цілі</b> (~500 км/год)</span>
         </div>
         <div class="slider-right">
           <button class="info-btn" onclick="openInfoModal('red')" title="Опис Швидкісних цілей">i</button>
@@ -863,9 +863,9 @@
       </div>
       <div class="modal-tabs">
         <button class="modal-tab active" data-tab="all" onclick="filterModalTab('all')">Всі категорії</button>
-        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Малі ударні БПЛА</button>
-        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Дальні ударні БПЛА</button>
-        <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">🔴 Швидкісні цілі</button>
+        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Мала швидкість (~90 км/год)</button>
+        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Середня швидкість (~180 км/год)</button>
+        <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">🔴 Висока швидкість (~500 км/год)</button>
         <button class="modal-tab" data-tab="bypass" onclick="filterModalTab('bypass')">⚡ Поза зонами (Критичні)</button>
       </div>
       <div class="modal-body" id="modal-cards-container">
@@ -873,7 +873,7 @@
         <!-- Yellow Card -->
         <div class="threat-card card-yellow" data-category="yellow">
           <div class="card-header">
-            <span class="card-title" style="color: #facc15;">🟡 Малі ударні БПЛА (Молнія, FPV, Ланцет)</span>
+            <span class="card-title" style="color: #facc15;">🟡 Дистанція реакції: Малошвидкісні цілі (~90 км/год)</span>
             <span class="card-meta">Швидкість: ~90 км/год (~1.5 км/хв)</span>
           </div>
           <ul class="threat-list">
@@ -883,14 +883,14 @@
             <li><b>Розвідувальні БПЛА</b> — Zala, Supercam, Орлан-10/30, Мерлін</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Правило спрацювання:</b> Сповіщення надсилається <b>тільки</b> при підтвердженому вході цілі або векторі руху в заданий радіус (за замовчуванням <b>7 км</b>). Дальні польоти по області ігноруються.
+            🎯 <b>Принцип роботи:</b> Налаштовує час реакції на малошвидкісні загрози (7 км дає ~4.5 хв). Якщо такий дрон помічено далеко (наприклад, за 30 км), бот не підіймає паніку, бо до підльоту понад 20 хвилин. Але якщо будь-яка ціль виявлена в зоні — сповіщення надходить миттєво з її реальним типом!
           </div>
         </div>
 
         <!-- Orange Card -->
         <div class="threat-card card-orange" data-category="orange">
           <div class="card-header">
-            <span class="card-title" style="color: #fb923c;">🟠 Дальні ударні БПЛА (Шахед, Герань, Гербера)</span>
+            <span class="card-title" style="color: #fb923c;">🟠 Дистанція реакції: Середньошвидкісні цілі (~180 км/год)</span>
             <span class="card-meta">Швидкість: ~180 км/год (~3 км/хв)</span>
           </div>
           <ul class="threat-list">
@@ -900,14 +900,14 @@
             <li><b>БПЛА невстановленого типу</b> — ударні крилаті апарати дального радіусу</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Правило спрацювання:</b> Моніторинг ведеться у заданому радіусі (за замовчуванням <b>15 км</b>). Якщо «шахед» рухається транзитом повз місто (наприклад, через Валки на Полтаву чи Суми) — бот <b>відсікає шум</b> і не турбує.
+            🎯 <b>Принцип роботи:</b> Забезпечує ~5 хвилин запасу часу для цілей зі швидкістю ~180 км/год (15 км). Якщо Шахед помітять одразу на підльоті за 4 км (у зоні лісу/передмістя), він <b>не стає Молнією</b> — бот сповістить саме про Шахед з точним розрахунком часу (~1.5 хв)!
           </div>
         </div>
 
         <!-- Red Card -->
         <div class="threat-card card-red" data-category="red">
           <div class="card-header">
-            <span class="card-title" style="color: #f87171;">🔴 Швидкісні цілі</span>
+            <span class="card-title" style="color: #f87171;">🔴 Дистанція реакції: Високошвидкісні цілі (~500 км/год)</span>
             <span class="card-meta">Швидкість: ~500–600 км/год (~8.3–10 км/хв)</span>
           </div>
           <ul class="threat-list">
@@ -916,7 +916,7 @@
             <li><b>КАБ / УМПБ Д-30</b> — керовані авіаційні бомби та планеруючі боєприпаси тактичної авіації</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Правило спрацювання:</b> Радіус реагування (за замовчуванням <b>30 км</b>). Час підльоту з моменту виявлення — від <b>2 до 4 хвилин</b>.
+            🎯 <b>Принцип роботи:</b> Забезпечує 3–4 хвилини для надшвидкісних об'єктів. При швидкості 500 км/год за 7 км лишається менше 50 секунд, тому для КАБ потрібен широкий радіус спостереження (30 км).
           </div>
         </div>
 
@@ -948,13 +948,51 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
   <script>
-    // Initial coordinates: Алексеевка, ст. м. Победа
+    // SkyShield Cloud API Base
+    const API_BASE = (window.location.origin.includes('github.io') || window.location.origin.includes('netlify.app'))
+      ? 'https://skyshield-bot.onrender.com'
+      : (window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8080');
+
+    // Initial coordinates & configuration loading:
+    // 1. URL params (?lat=...&lon=...)
+    // 2. localStorage ('skyshield_user_config')
+    // 3. Defaults (Олексіївка)
     let userCoords = [50.0570, 36.2030];
     let presets = {
-      home: { coords: [50.0570, 36.2030], yellow: 7, orange: 15, red: 30 },
-      work: { coords: [49.9450, 36.3750], yellow: 5, orange: 12, red: 25 } // ХТЗ
+      home: { coords: [50.0570, 36.2030], yellow: 7, orange: 15, red: 32 },
+      work: { coords: [49.9450, 36.3750], yellow: 5, orange: 12, red: 25 }
     };
     let currentPreset = 'home';
+    let initialYellow = 7;
+    let initialOrange = 15;
+    let initialRed = 32;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('lat') && urlParams.has('lon')) {
+      const pLat = parseFloat(urlParams.get('lat'));
+      const pLon = parseFloat(urlParams.get('lon'));
+      if (!isNaN(pLat) && !isNaN(pLon)) {
+        userCoords = [pLat, pLon];
+      }
+      if (urlParams.has('y')) initialYellow = parseInt(urlParams.get('y')) || 7;
+      if (urlParams.has('o')) initialOrange = parseInt(urlParams.get('o')) || 15;
+      if (urlParams.has('r')) initialRed = parseInt(urlParams.get('r')) || 32;
+    } else {
+      try {
+        const localCfg = JSON.parse(localStorage.getItem('skyshield_user_config'));
+        if (localCfg && localCfg.coordinates && Array.isArray(localCfg.coordinates)) {
+          userCoords = [localCfg.coordinates[0], localCfg.coordinates[1]];
+        }
+        if (localCfg && localCfg.radii_km) {
+          if (localCfg.radii_km.tactical_yellow) initialYellow = localCfg.radii_km.tactical_yellow;
+          if (localCfg.radii_km.standard_orange) initialOrange = localCfg.radii_km.standard_orange;
+          if (localCfg.radii_km.fast_red) initialRed = localCfg.radii_km.fast_red;
+        }
+        if (localCfg && localCfg.preset) {
+          currentPreset = localCfg.preset;
+        }
+      } catch (e) {}
+    }
 
     // Initialize Map
     const map = L.map('map', {
@@ -1002,7 +1040,7 @@
 
     // Concentric Safety Circles: Yellow (Tactical), Orange (Standard UAV), Red (High Speed / KAB)
     let circleYellow = L.circle(userCoords, {
-      radius: 7000,
+      radius: initialYellow * 1000,
       color: '#eab308',
       fillColor: '#eab308',
       fillOpacity: 0.12,
@@ -1010,7 +1048,7 @@
     }).addTo(map);
 
     let circleOrange = L.circle(userCoords, {
-      radius: 15000,
+      radius: initialOrange * 1000,
       color: '#f97316',
       fillColor: '#f97316',
       fillOpacity: 0.08,
@@ -1018,7 +1056,7 @@
     }).addTo(map);
 
     let circleRed = L.circle(userCoords, {
-      radius: 30000,
+      radius: initialRed * 1000,
       color: '#ef4444',
       fillColor: '#ef4444',
       fillOpacity: 0.04,
@@ -1209,28 +1247,29 @@
         if (toast) toast.classList.remove('visible');
       }, 4500);
 
-      // Send to local SkyShield Bot API if available
-      fetch('http://127.0.0.1:8080/api/save', {
+      // Send to Cloud Bot API
+      fetch(`${API_BASE}/api/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       }).then(r => r.json()).then(res => {
         console.log('Successfully synced with SkyShield Bot:', res);
       }).catch(err => {
-        // Normal if opened offline or bot webserver not active
-        console.log('Local bot API not active:', err);
+        console.log('Bot API sync error:', err);
       });
 
-      // If inside Telegram WebApp, send data back to bot
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData) {
-        setTimeout(() => {
-          try {
+      // Send directly via Telegram WebApp bridge
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          if (window.Telegram.WebApp.sendData) {
             window.Telegram.WebApp.sendData(JSON.stringify(config));
-            window.Telegram.WebApp.close();
-          } catch(e) {
-            console.log('Telegram WebApp error:', e);
           }
-        }, 1200);
+          setTimeout(() => {
+            window.Telegram.WebApp.close();
+          }, 800);
+        } catch(e) {
+          console.log('Telegram WebApp error:', e);
+        }
       }
     }
 
@@ -1281,32 +1320,39 @@
       }
     });
 
-    // Fetch saved settings from SkyShield Bot if available
-    fetch('http://127.0.0.1:8080/api/config')
-      .then(res => res.json())
-      .then(cfg => {
-        if (cfg && cfg.coordinates) {
-          updatePositions([cfg.coordinates[0], cfg.coordinates[1]]);
-          map.setView([cfg.coordinates[0], cfg.coordinates[1]], 12);
-        }
-        if (cfg && cfg.radii_km) {
-          if (cfg.radii_km.tactical_yellow) {
-            document.getElementById('slider-yellow').value = cfg.radii_km.tactical_yellow;
-            updateCircle('yellow', cfg.radii_km.tactical_yellow);
+    // Set initial values in sliders & badges
+    document.getElementById('range-yellow').value = initialYellow;
+    document.getElementById('range-orange').value = initialOrange;
+    document.getElementById('range-red').value = initialRed;
+    updateRadii();
+    updatePositions(userCoords);
+
+    // Fetch saved settings from SkyShield Bot if available and not explicitly provided in URL
+    if (!urlParams.has('lat')) {
+      fetch(`${API_BASE}/api/config`)
+        .then(res => res.json())
+        .then(cfg => {
+          if (cfg && cfg.coordinates) {
+            updatePositions([cfg.coordinates[0], cfg.coordinates[1]]);
+            map.setView([cfg.coordinates[0], cfg.coordinates[1]], 12);
           }
-          if (cfg.radii_km.standard_orange) {
-            document.getElementById('slider-orange').value = cfg.radii_km.standard_orange;
-            updateCircle('orange', cfg.radii_km.standard_orange);
+          if (cfg && cfg.radii_km) {
+            if (cfg.radii_km.tactical_yellow) {
+              document.getElementById('range-yellow').value = cfg.radii_km.tactical_yellow;
+            }
+            if (cfg.radii_km.standard_orange) {
+              document.getElementById('range-orange').value = cfg.radii_km.standard_orange;
+            }
+            if (cfg.radii_km.fast_red) {
+              document.getElementById('range-red').value = cfg.radii_km.fast_red;
+            }
+            updateRadii();
           }
-          if (cfg.radii_km.fast_red) {
-            document.getElementById('slider-red').value = cfg.radii_km.fast_red;
-            updateCircle('red', cfg.radii_km.fast_red);
-          }
-        }
-      })
-      .catch(() => {
-        // Fallback to defaults if running standalone
-      });
+        })
+        .catch(() => {
+          // Fallback to defaults if running standalone
+        });
+    }
 
     // Notify Telegram that WebApp is ready
     if (window.Telegram && window.Telegram.WebApp) {
