@@ -3,11 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SkyShield — Радар Безпеки</title>
+  <title>SkyShield вЂ” Р Р°РґР°СЂ Р‘РµР·РїРµРєРё</title>
   
   <!-- Leaflet CSS & Telegram WebApp Script -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    if (window.Telegram && window.Telegram.WebApp) {
+      try {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
+          window.Telegram.WebApp.disableVerticalSwipes();
+        }
+      } catch (e) {}
+    }
+  </script>
   
   <style>
     :root {
@@ -34,6 +45,10 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      position: fixed;
+      inset: 0;
+      overscroll-behavior: none;
+      overscroll-behavior-y: none;
       background-color: var(--bg-dark);
       color: var(--text-main);
     }
@@ -43,6 +58,9 @@
       height: 100%;
       z-index: 1;
       background-color: #0b1120;
+      touch-action: none;
+      overscroll-behavior: none;
+      overscroll-behavior-y: none;
     }
 
     .leaflet-container {
@@ -429,6 +447,8 @@
     .modal-body {
       padding: 18px 20px;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -501,7 +521,7 @@
     }
 
     .threat-list li::before {
-      content: "•";
+      content: "вЂў";
       position: absolute;
       left: 0;
       color: var(--text-muted);
@@ -768,32 +788,14 @@
     }
 
     /* ==========================================================================
-       MOBILE RESPONSIVE "TRAFFIC LIGHT" (СВІТЛОФОР) REDESIGN
-       Desktop remains 100% unaffected via @media (min-width: 769px)
+       UNIFIED "TRAFFIC LIGHT" (РЎР’Р†РўР›РћР¤РћР ) INTERFACE FOR PC & MOBILE
+       PC: Card positioned on the right side, close to the traffic light
+       Mobile: Card centered at bottom with rounded corner matching screen bezel
        ========================================================================== */
 
-    /* Desktop overrides: ensure mobile widgets are hidden and all 3 sliders are visible */
-    @media (min-width: 769px) {
-      .traffic-light-widget,
-      .mobile-collapsed-bar,
-      .mobile-drag-handle,
-      .mobile-only {
-        display: none !important;
-      }
-      .control-panel {
-        display: block !important;
-        transform: translateX(-50%) !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-      }
-      .slider-group {
-        display: block !important;
-      }
-    }
-
-    /* Common classes for mobile elements */
+    /* Base styles shared across both PC and Mobile */
     .mobile-only {
-      display: none;
+      display: block;
     }
 
     .threat-subtext {
@@ -804,17 +806,231 @@
       line-height: 1.35;
     }
 
-    /* Mobile view styling (max-width: 768px) */
+    /* Single active slider group at a time */
+    .slider-group {
+      display: none;
+      margin-bottom: 8px;
+    }
+
+    .slider-group.mobile-active {
+      display: block;
+      animation: fadeInSlider 0.22s ease-out;
+    }
+
+    @keyframes fadeInSlider {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Traffic Light Widget (Base) */
+    .traffic-light-widget {
+      position: absolute;
+      z-index: 1001;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 26px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .traffic-light-title {
+      font-size: 8px;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+
+    .tl-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0.65;
+      padding: 0;
+      outline: none;
+    }
+
+    .tl-btn:hover {
+      opacity: 0.9;
+    }
+
+    .tl-btn .tl-emoji {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .tl-btn .tl-val {
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .tl-btn-yellow .tl-val { color: #facc15; }
+    .tl-btn-orange .tl-val { color: #fb923c; }
+    .tl-btn-red .tl-val { color: #f87171; }
+
+    .tl-btn-yellow.active {
+      opacity: 1;
+      border: 2px solid #eab308;
+      background: rgba(234, 179, 8, 0.25);
+      box-shadow: 0 0 16px rgba(234, 179, 8, 0.5);
+      transform: scale(1.1);
+    }
+
+    .tl-btn-orange.active {
+      opacity: 1;
+      border: 2px solid #f97316;
+      background: rgba(249, 115, 22, 0.25);
+      box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
+      transform: scale(1.1);
+    }
+
+    .tl-btn-red.active {
+      opacity: 1;
+      border: 2px solid #ef4444;
+      background: rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+      transform: scale(1.1);
+    }
+
+    .tl-btn-toggle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #cbd5e1;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      margin-top: 2px;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .tl-btn-toggle:active {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(0.95);
+    }
+
+    .mobile-drag-handle {
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+      margin: 0 auto 8px auto;
+      cursor: pointer;
+    }
+
+    /* Collapsed Bottom Status Pill (Base) */
+    .mobile-collapsed-bar {
+      position: absolute;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8);
+      cursor: pointer;
+      animation: slideUpPill 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mobile-collapsed-bar.visible {
+      display: flex;
+    }
+
+    @keyframes slideUpPill {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .mcb-content {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .mcb-btn-save {
+      background: var(--accent-primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+    }
+
+    /* ==========================================================================
+       DESKTOP VIEW (min-width: 769px):
+       Panel pulled to the right side, close to the traffic light
+       ========================================================================== */
+    @media (min-width: 769px) {
+      .traffic-light-widget {
+        right: 24px;
+        top: 46%;
+        transform: translateY(-50%);
+      }
+
+      .control-panel {
+        left: auto !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        transform: none !important;
+        width: 480px !important;
+        max-width: calc(100vw - 48px) !important;
+        border-radius: 22px !important;
+        padding: 12px 18px 16px 18px !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
+      }
+
+      .control-panel.collapsed {
+        transform: translateY(120%) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      .mobile-collapsed-bar {
+        left: auto !important;
+        right: 24px !important;
+        bottom: 24px !important;
+        width: 400px !important;
+        max-width: calc(100vw - 48px) !important;
+      }
+    }
+
+    /* ==========================================================================
+       MOBILE VIEW (max-width: 768px):
+       Panel centered at bottom with rounded bottom corners matching screen bezel
+       ========================================================================== */
     @media (max-width: 768px) {
-      .mobile-only {
-        display: block !important;
-      }
-
-      .desktop-only {
-        display: none !important;
-      }
-
-      /* Compact Top App Header */
       .app-header {
         width: calc(100% - 16px);
         top: 8px;
@@ -836,158 +1052,40 @@
         border-radius: 6px;
       }
 
-      /* Traffic Light Widget on right screen edge */
       .traffic-light-widget {
-        position: absolute;
         right: 10px;
         top: 46%;
         transform: translateY(-50%);
-        z-index: 1001;
-        background: rgba(15, 23, 42, 0.94);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 26px;
-        padding: 8px 6px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
 
-      .traffic-light-title {
-        font-size: 8px;
-        font-weight: 800;
-        color: #94a3b8;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        margin-bottom: 1px;
-      }
-
-      .tl-btn {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        border: 1.5px solid rgba(255, 255, 255, 0.15);
-        background: rgba(255, 255, 255, 0.05);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-        opacity: 0.65;
-        padding: 0;
-        outline: none;
-      }
-
-      .tl-btn .tl-emoji {
-        font-size: 14px;
-        line-height: 1;
-      }
-
-      .tl-btn .tl-val {
-        font-size: 10px;
-        font-weight: 800;
-        line-height: 1;
-        margin-top: 2px;
-      }
-
-      .tl-btn-yellow .tl-val { color: #facc15; }
-      .tl-btn-orange .tl-val { color: #fb923c; }
-      .tl-btn-red .tl-val { color: #f87171; }
-
-      /* Active highlighted states for Traffic Light buttons */
-      .tl-btn-yellow.active {
-        opacity: 1;
-        border: 2px solid #eab308;
-        background: rgba(234, 179, 8, 0.25);
-        box-shadow: 0 0 16px rgba(234, 179, 8, 0.5);
-        transform: scale(1.1);
-      }
-
-      .tl-btn-orange.active {
-        opacity: 1;
-        border: 2px solid #f97316;
-        background: rgba(249, 115, 22, 0.25);
-        box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
-        transform: scale(1.1);
-      }
-
-      .tl-btn-red.active {
-        opacity: 1;
-        border: 2px solid #ef4444;
-        background: rgba(239, 68, 68, 0.25);
-        box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
-        transform: scale(1.1);
-      }
-
-      .tl-btn-toggle {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        color: #cbd5e1;
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        margin-top: 2px;
-        transition: all 0.2s;
-        outline: none;
-      }
-
-      .tl-btn-toggle:active {
-        background: rgba(255, 255, 255, 0.25);
-        transform: scale(0.95);
-      }
-
-      /* Compact Bottom Control Panel on Mobile */
       .control-panel {
-        width: calc(100% - 16px);
-        max-width: none;
-        bottom: 8px;
-        padding: 8px 14px 12px 14px;
-        border-radius: 18px;
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        width: calc(100% - 16px) !important;
+        max-width: none !important;
+        bottom: 8px !important;
+        padding: 8px 14px 14px 14px !important;
+        border-radius: 26px 26px 38px 38px !important;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
       }
 
       .control-panel.collapsed {
-        transform: translateX(-50%) translateY(120%);
-        opacity: 0;
-        pointer-events: none;
+        transform: translateX(-50%) translateY(120%) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
       }
 
-      .mobile-drag-handle {
-        width: 40px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.25);
-        border-radius: 3px;
-        margin: 0 auto 8px auto;
-        cursor: pointer;
+      .mobile-collapsed-bar {
+        position: absolute;
+        bottom: 26px;
+        left: 10px;
+        right: 10px;
+        width: auto;
       }
 
       .panel-row {
         margin-bottom: 6px;
-      }
-
-      /* Show only the single active slider group on mobile */
-      .slider-group {
-        display: none;
-        margin-bottom: 8px;
-      }
-
-      .slider-group.mobile-active {
-        display: block;
-        animation: fadeInSlider 0.22s ease-out;
-      }
-
-      @keyframes fadeInSlider {
-        from { opacity: 0; transform: translateY(4px); }
-        to { opacity: 1; transform: translateY(0); }
       }
 
       .slider-header {
@@ -1015,57 +1113,6 @@
         font-size: 10px;
         margin-top: 5px;
       }
-
-      /* Collapsed Bottom Status Pill */
-      .mobile-collapsed-bar {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        right: 10px;
-        z-index: 1000;
-        background: rgba(15, 23, 42, 0.96);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 14px;
-        padding: 8px 12px;
-        display: none;
-        align-items: center;
-        justify-content: space-between;
-        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8);
-        cursor: pointer;
-        animation: slideUpPill 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      .mobile-collapsed-bar.visible {
-        display: flex;
-      }
-
-      @keyframes slideUpPill {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-      }
-
-      .mcb-content {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11.5px;
-        font-weight: 600;
-        color: #f1f5f9;
-      }
-
-      .mcb-btn-save {
-        background: var(--accent-primary);
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-size: 11.5px;
-        font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
-      }
     }
   </style>
 </head>
@@ -1074,22 +1121,22 @@
   <!-- Header -->
   <div class="app-header">
     <div class="brand-title">
-      🛡 SkyShield
-      <span class="brand-badge">Фільтр реальних загроз</span>
+      рџ›Ў SkyShield
+      <span class="brand-badge">Р¤С–Р»СЊС‚СЂ СЂРµР°Р»СЊРЅРёС… Р·Р°РіСЂРѕР·</span>
     </div>
     <div class="preset-selector">
-      <button class="preset-btn active" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
-      <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
+      <button class="preset-btn active" id="btn-preset-home" onclick="selectPreset('home')">рџЏ  Р”С–Рј</button>
+      <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">рџ’ј Р РѕР±РѕС‚Р°</button>
       
     </div>
   </div>
 
   <!-- Save Success Toast Notification -->
   <div id="save-success-toast" class="save-toast">
-    <div class="save-toast-icon">✅</div>
+    <div class="save-toast-icon">вњ…</div>
     <div>
-      <div class="save-toast-title">Позицію та радіуси успішно збережено!</div>
-      <div id="save-toast-desc" class="save-toast-desc">Координати та зони безпеки зафіксовано</div>
+      <div class="save-toast-title">РџРѕР·РёС†С–СЋ С‚Р° СЂР°РґС–СѓСЃРё СѓСЃРїС–С€РЅРѕ Р·Р±РµСЂРµР¶РµРЅРѕ!</div>
+      <div id="save-toast-desc" class="save-toast-desc">РљРѕРѕСЂРґРёРЅР°С‚Рё С‚Р° Р·РѕРЅРё Р±РµР·РїРµРєРё Р·Р°С„С–РєСЃРѕРІР°РЅРѕ</div>
     </div>
   </div>
 
@@ -1098,36 +1145,36 @@
 
   <!-- Vertical Traffic Light Widget (Mobile Only) -->
   <div id="traffic-light-widget" class="traffic-light-widget">
-    <div class="traffic-light-title">ЗОНИ</div>
+    <div class="traffic-light-title">Р—РћРќР</div>
     
-    <button id="tl-btn-yellow" class="tl-btn tl-btn-yellow active" onclick="selectMobileZone('yellow')" title="Малошвидкісні цілі">
-      <span class="tl-emoji">🟡</span>
-      <span id="tl-val-yellow" class="tl-val">7к</span>
+    <button id="tl-btn-yellow" class="tl-btn tl-btn-yellow active" onclick="selectMobileZone('yellow')" title="РњР°Р»РѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–">
+      <span class="tl-emoji">рџџЎ</span>
+      <span id="tl-val-yellow" class="tl-val">7Рє</span>
     </button>
     
-    <button id="tl-btn-orange" class="tl-btn tl-btn-orange" onclick="selectMobileZone('orange')" title="Середньошвидкісні цілі">
-      <span class="tl-emoji">🟠</span>
-      <span id="tl-val-orange" class="tl-val">15к</span>
+    <button id="tl-btn-orange" class="tl-btn tl-btn-orange" onclick="selectMobileZone('orange')" title="РЎРµСЂРµРґРЅСЊРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–">
+      <span class="tl-emoji">рџџ </span>
+      <span id="tl-val-orange" class="tl-val">15Рє</span>
     </button>
     
-    <button id="tl-btn-red" class="tl-btn tl-btn-red" onclick="selectMobileZone('red')" title="Високошвидкісні цілі">
-      <span class="tl-emoji">🔴</span>
-      <span id="tl-val-red" class="tl-val">30к</span>
+    <button id="tl-btn-red" class="tl-btn tl-btn-red" onclick="selectMobileZone('red')" title="Р’РёСЃРѕРєРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–">
+      <span class="tl-emoji">рџ”ґ</span>
+      <span id="tl-val-red" class="tl-val">30Рє</span>
     </button>
 
-    <button id="tl-btn-toggle" class="tl-btn-toggle" onclick="toggleMobilePanel()" title="Згорнути / розгорнути панель">
-      <span id="tl-toggle-arrow">▼</span>
+    <button id="tl-btn-toggle" class="tl-btn-toggle" onclick="toggleMobilePanel()" title="Р—РіРѕСЂРЅСѓС‚Рё / СЂРѕР·РіРѕСЂРЅСѓС‚Рё РїР°РЅРµР»СЊ">
+      <span id="tl-toggle-arrow">в–ј</span>
     </button>
   </div>
 
   <!-- Mobile Collapsed Bottom Pill (Displayed when panel is collapsed) -->
   <div id="mobile-collapsed-bar" class="mobile-collapsed-bar" onclick="expandMobilePanel()">
     <div class="mcb-content">
-      <span style="font-size: 14px;">🛡</span>
-      <span id="mcb-text">🟡 7км • 🟠 15км • 🔴 30км</span>
+      <span style="font-size: 14px;">рџ›Ў</span>
+      <span id="mcb-text">рџџЎ 7РєРј вЂў рџџ  15РєРј вЂў рџ”ґ 30РєРј</span>
     </div>
     <button class="mcb-btn-save" onclick="event.stopPropagation(); saveSettings()">
-      💾 Зберегти
+      рџ’ѕ Р—Р±РµСЂРµРіС‚Рё
     </button>
   </div>
 
@@ -1138,23 +1185,23 @@
 
     <!-- Floating TTX Estimation Toast (above panel) -->
     <div id="ttx-toast" class="ttx-toast" onmouseenter="pauseTTXTimer()" onmouseleave="resumeTTXTimer()">
-      <div id="ttx-icon" class="ttx-icon">⏱</div>
+      <div id="ttx-icon" class="ttx-icon">вЏ±</div>
       <div class="ttx-content">
         <div class="ttx-title">
-          <span id="ttx-label">Час реакції на загрозу:</span>
-          <span id="ttx-time" class="ttx-badge">~5 хв</span>
+          <span id="ttx-label">Р§Р°СЃ СЂРµР°РєС†С–С— РЅР° Р·Р°РіСЂРѕР·Сѓ:</span>
+          <span id="ttx-time" class="ttx-badge">~5 С…РІ</span>
         </div>
         <div id="ttx-desc" class="ttx-desc">
-          ТТХ: Ударні БПЛА (Шахед, Італмас, ~180 км/год) при прямому векторі на радіус 15 км
+          РўРўРҐ: РЈРґР°СЂРЅС– Р‘РџР›Рђ (РЁР°С…РµРґ, Р†С‚Р°Р»РјР°СЃ, ~180 РєРј/РіРѕРґ) РїСЂРё РїСЂСЏРјРѕРјСѓ РІРµРєС‚РѕСЂС– РЅР° СЂР°РґС–СѓСЃ 15 РєРј
         </div>
       </div>
-      <button class="ttx-close" onclick="hideTTXToast()" title="Закрити">✕</button>
+      <button class="ttx-close" onclick="hideTTXToast()" title="Р—Р°РєСЂРёС‚Рё">вњ•</button>
     </div>
 
     <div class="panel-row">
       <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 14px; font-weight: 600;">Налаштування зон безпеки</span>
-        <button class="info-btn-all" onclick="openInfoModal('all')" title="Повний довідник загроз">ℹ️ Довідник загроз</button>
+        <span style="font-size: 14px; font-weight: 600;">РќР°Р»Р°С€С‚СѓРІР°РЅРЅСЏ Р·РѕРЅ Р±РµР·РїРµРєРё</span>
+        <button class="info-btn-all" onclick="openInfoModal('all')" title="РџРѕРІРЅРёР№ РґРѕРІС–РґРЅРёРє Р·Р°РіСЂРѕР·">в„№пёЏ Р”РѕРІС–РґРЅРёРє Р·Р°РіСЂРѕР·</button>
       </div>
       <span id="coords-text" style="font-size: 12px; color: var(--text-muted);">50.0570, 36.2030</span>
     </div>
@@ -1163,16 +1210,16 @@
     <div id="group-yellow" class="slider-group mobile-active">
       <div class="slider-header">
         <div class="slider-left">
-          <span>🟡</span>
-          <span class="radius-badge badge-yellow"><span id="val-yellow">7</span> км</span>
-          <span class="label-yellow">радіус реакції: <b>Малошвидкісні цілі</b> (~90 км/год)</span>
+          <span>рџџЎ</span>
+          <span class="radius-badge badge-yellow"><span id="val-yellow">7</span> РєРј</span>
+          <span class="label-yellow">СЂР°РґС–СѓСЃ СЂРµР°РєС†С–С—: <b>РњР°Р»РѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–</b> (~90 РєРј/РіРѕРґ)</span>
         </div>
         <div class="slider-right">
-          <button class="info-btn" onclick="openInfoModal('yellow')" title="Опис Малих ударних БПЛА">i</button>
-          <span id="val-yellow-time" class="badge-right">⏱ ~4 хв 40 сек</span>
+          <button class="info-btn" onclick="openInfoModal('yellow')" title="РћРїРёСЃ РњР°Р»РёС… СѓРґР°СЂРЅРёС… Р‘РџР›Рђ">i</button>
+          <span id="val-yellow-time" class="badge-right">вЏ± ~4 С…РІ 40 СЃРµРє</span>
         </div>
       </div>
-      <div class="mobile-only threat-subtext">FPV, Молнія, Ланцет (~90 км/год) при підльоті на радіус реакції</div>
+      <div class="mobile-only threat-subtext">FPV, РњРѕР»РЅС–СЏ, Р›Р°РЅС†РµС‚ (~90 РєРј/РіРѕРґ) РїСЂРё РїС–РґР»СЊРѕС‚С– РЅР° СЂР°РґС–СѓСЃ СЂРµР°РєС†С–С—</div>
       <input type="range" id="range-yellow" min="3" max="15" value="7" oninput="updateRadii('yellow')">
     </div>
 
@@ -1180,16 +1227,16 @@
     <div id="group-orange" class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
-          <span>🟠</span>
-          <span class="radius-badge badge-orange"><span id="val-orange">15</span> км</span>
-          <span class="label-orange">радіус реакції: <b>Середньошвидкісні цілі</b> (~180 км/год)</span>
+          <span>рџџ </span>
+          <span class="radius-badge badge-orange"><span id="val-orange">15</span> РєРј</span>
+          <span class="label-orange">СЂР°РґС–СѓСЃ СЂРµР°РєС†С–С—: <b>РЎРµСЂРµРґРЅСЊРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–</b> (~180 РєРј/РіРѕРґ)</span>
         </div>
         <div class="slider-right">
-          <button class="info-btn" onclick="openInfoModal('orange')" title="Опис Дальніх ударних БПЛА">i</button>
-          <span id="val-orange-time" class="badge-right">⏱ ~5 хв</span>
+          <button class="info-btn" onclick="openInfoModal('orange')" title="РћРїРёСЃ Р”Р°Р»СЊРЅС–С… СѓРґР°СЂРЅРёС… Р‘РџР›Рђ">i</button>
+          <span id="val-orange-time" class="badge-right">вЏ± ~5 С…РІ</span>
         </div>
       </div>
-      <div class="mobile-only threat-subtext">Шахед, Герань, Гербера (~180 км/год) при прямому векторі на радіус</div>
+      <div class="mobile-only threat-subtext">РЁР°С…РµРґ, Р“РµСЂР°РЅСЊ, Р“РµСЂР±РµСЂР° (~180 РєРј/РіРѕРґ) РїСЂРё РїСЂСЏРјРѕРјСѓ РІРµРєС‚РѕСЂС– РЅР° СЂР°РґС–СѓСЃ</div>
       <input type="range" id="range-orange" min="8" max="25" value="15" oninput="updateRadii('orange')">
     </div>
 
@@ -1197,23 +1244,23 @@
     <div id="group-red" class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
-          <span>🔴</span>
-          <span class="radius-badge badge-red"><span id="val-red">30</span> км</span>
-          <span class="label-red">радіус реакції: <b>Високошвидкісні цілі</b> (~500 км/год)</span>
+          <span>рџ”ґ</span>
+          <span class="radius-badge badge-red"><span id="val-red">30</span> РєРј</span>
+          <span class="label-red">СЂР°РґС–СѓСЃ СЂРµР°РєС†С–С—: <b>Р’РёСЃРѕРєРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С–</b> (~500 РєРј/РіРѕРґ)</span>
         </div>
         <div class="slider-right">
-          <button class="info-btn" onclick="openInfoModal('red')" title="Опис Швидкісних цілей">i</button>
-          <span id="val-red-time" class="badge-right">⏱ ~3 хв 36 сек</span>
+          <button class="info-btn" onclick="openInfoModal('red')" title="РћРїРёСЃ РЁРІРёРґРєС–СЃРЅРёС… С†С–Р»РµР№">i</button>
+          <span id="val-red-time" class="badge-right">вЏ± ~3 С…РІ 36 СЃРµРє</span>
         </div>
       </div>
-      <div class="mobile-only threat-subtext">КАБ, реактивні БПЛА (~500 км/год) при наближенні на радіус</div>
+      <div class="mobile-only threat-subtext">РљРђР‘, СЂРµР°РєС‚РёРІРЅС– Р‘РџР›Рђ (~500 РєРј/РіРѕРґ) РїСЂРё РЅР°Р±Р»РёР¶РµРЅРЅС– РЅР° СЂР°РґС–СѓСЃ</div>
       <input type="range" id="range-red" min="20" max="50" value="30" oninput="updateRadii('red')">
     </div>
 
     <button class="btn-save" onclick="saveSettings()">
-      💾 Зберегти позицію та радіуси
+      рџ’ѕ Р—Р±РµСЂРµРіС‚Рё РїРѕР·РёС†С–СЋ С‚Р° СЂР°РґС–СѓСЃРё
     </button>
-    <div class="info-tag">💡 Натисніть у будь-яку точку карти або перетягніть маркер</div>
+    <div class="info-tag">рџ’Ў РќР°С‚РёСЃРЅС–С‚СЊ Сѓ Р±СѓРґСЊ-СЏРєСѓ С‚РѕС‡РєСѓ РєР°СЂС‚Рё Р°Р±Рѕ РїРµСЂРµС‚СЏРіРЅС–С‚СЊ РјР°СЂРєРµСЂ</div>
   </div>
 
   <!-- Threat Classification Info Modal -->
@@ -1221,87 +1268,87 @@
     <div class="modal-window">
       <div class="modal-header">
         <div class="modal-title">
-          <span>🛡</span>
-          <span>Класифікація загроз SkyShield</span>
+          <span>рџ›Ў</span>
+          <span>РљР»Р°СЃРёС„С–РєР°С†С–СЏ Р·Р°РіСЂРѕР· SkyShield</span>
         </div>
-        <button class="modal-close" onclick="closeInfoModal()" title="Закрити">✕</button>
+        <button class="modal-close" onclick="closeInfoModal()" title="Р—Р°РєСЂРёС‚Рё">вњ•</button>
       </div>
       <div class="modal-tabs">
-        <button class="modal-tab active" data-tab="all" onclick="filterModalTab('all')">Всі категорії</button>
-        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">🟡 Мала швидкість (~90 км/год)</button>
-        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">🟠 Середня швидкість (~180 км/год)</button>
-        <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">🔴 Висока швидкість (~500 км/год)</button>
-        <button class="modal-tab" data-tab="bypass" onclick="filterModalTab('bypass')">⚡ Поза зонами (Критичні)</button>
+        <button class="modal-tab active" data-tab="all" onclick="filterModalTab('all')">Р’СЃС– РєР°С‚РµРіРѕСЂС–С—</button>
+        <button class="modal-tab" data-tab="yellow" onclick="filterModalTab('yellow')">рџџЎ РњР°Р»Р° С€РІРёРґРєС–СЃС‚СЊ (~90 РєРј/РіРѕРґ)</button>
+        <button class="modal-tab" data-tab="orange" onclick="filterModalTab('orange')">рџџ  РЎРµСЂРµРґРЅСЏ С€РІРёРґРєС–СЃС‚СЊ (~180 РєРј/РіРѕРґ)</button>
+        <button class="modal-tab" data-tab="red" onclick="filterModalTab('red')">рџ”ґ Р’РёСЃРѕРєР° С€РІРёРґРєС–СЃС‚СЊ (~500 РєРј/РіРѕРґ)</button>
+        <button class="modal-tab" data-tab="bypass" onclick="filterModalTab('bypass')">вљЎ РџРѕР·Р° Р·РѕРЅР°РјРё (РљСЂРёС‚РёС‡РЅС–)</button>
       </div>
       <div class="modal-body" id="modal-cards-container">
         
         <!-- Yellow Card -->
         <div class="threat-card card-yellow" data-category="yellow">
           <div class="card-header">
-            <span class="card-title" style="color: #facc15;">🟡 Дистанція реакції: Малошвидкісні цілі (~90 км/год)</span>
-            <span class="card-meta">Швидкість: ~90 км/год (~1.5 км/хв)</span>
+            <span class="card-title" style="color: #facc15;">рџџЎ Р”РёСЃС‚Р°РЅС†С–СЏ СЂРµР°РєС†С–С—: РњР°Р»РѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С– (~90 РєРј/РіРѕРґ)</span>
+            <span class="card-meta">РЁРІРёРґРєС–СЃС‚СЊ: ~90 РєРј/РіРѕРґ (~1.5 РєРј/С…РІ)</span>
           </div>
           <ul class="threat-list">
-            <li><b>БПЛА «Молнія»</b> — швидкісний тактичний ударний дрон літакового типу</li>
-            <li><b>FPV-дрони</b> — маневрені баражуючі квадрокоптери з бойовою частиною</li>
-            <li><b>БПЛА «Ланцет»</b> — високоточний баражуючий боєприпас тактичної ланки</li>
-            <li><b>Розвідувальні БПЛА</b> — Zala, Supercam, Орлан-10/30, Мерлін</li>
+            <li><b>Р‘РџР›Рђ В«РњРѕР»РЅС–СЏВ»</b> вЂ” С€РІРёРґРєС–СЃРЅРёР№ С‚Р°РєС‚РёС‡РЅРёР№ СѓРґР°СЂРЅРёР№ РґСЂРѕРЅ Р»С–С‚Р°РєРѕРІРѕРіРѕ С‚РёРїСѓ</li>
+            <li><b>FPV-РґСЂРѕРЅРё</b> вЂ” РјР°РЅРµРІСЂРµРЅС– Р±Р°СЂР°Р¶СѓСЋС‡С– РєРІР°РґСЂРѕРєРѕРїС‚РµСЂРё Р· Р±РѕР№РѕРІРѕСЋ С‡Р°СЃС‚РёРЅРѕСЋ</li>
+            <li><b>Р‘РџР›Рђ В«Р›Р°РЅС†РµС‚В»</b> вЂ” РІРёСЃРѕРєРѕС‚РѕС‡РЅРёР№ Р±Р°СЂР°Р¶СѓСЋС‡РёР№ Р±РѕС”РїСЂРёРїР°СЃ С‚Р°РєС‚РёС‡РЅРѕС— Р»Р°РЅРєРё</li>
+            <li><b>Р РѕР·РІС–РґСѓРІР°Р»СЊРЅС– Р‘РџР›Рђ</b> вЂ” Zala, Supercam, РћСЂР»Р°РЅ-10/30, РњРµСЂР»С–РЅ</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Принцип роботи:</b> Налаштовує час реакції на малошвидкісні загрози (7 км дає ~4.5 хв). Якщо такий дрон помічено далеко (наприклад, за 30 км), бот не підіймає паніку, бо до підльоту понад 20 хвилин. Але якщо будь-яка ціль виявлена в зоні — сповіщення надходить миттєво з її реальним типом!
+            рџЋЇ <b>РџСЂРёРЅС†РёРї СЂРѕР±РѕС‚Рё:</b> РќР°Р»Р°С€С‚РѕРІСѓС” С‡Р°СЃ СЂРµР°РєС†С–С— РЅР° РјР°Р»РѕС€РІРёРґРєС–СЃРЅС– Р·Р°РіСЂРѕР·Рё (7 РєРј РґР°С” ~4.5 С…РІ). РЇРєС‰Рѕ С‚Р°РєРёР№ РґСЂРѕРЅ РїРѕРјС–С‡РµРЅРѕ РґР°Р»РµРєРѕ (РЅР°РїСЂРёРєР»Р°Рґ, Р·Р° 30 РєРј), Р±РѕС‚ РЅРµ РїС–РґС–Р№РјР°С” РїР°РЅС–РєСѓ, Р±Рѕ РґРѕ РїС–РґР»СЊРѕС‚Сѓ РїРѕРЅР°Рґ 20 С…РІРёР»РёРЅ. РђР»Рµ СЏРєС‰Рѕ Р±СѓРґСЊ-СЏРєР° С†С–Р»СЊ РІРёСЏРІР»РµРЅР° РІ Р·РѕРЅС– вЂ” СЃРїРѕРІС–С‰РµРЅРЅСЏ РЅР°РґС…РѕРґРёС‚СЊ РјРёС‚С‚С”РІРѕ Р· С—С— СЂРµР°Р»СЊРЅРёРј С‚РёРїРѕРј!
           </div>
         </div>
 
         <!-- Orange Card -->
         <div class="threat-card card-orange" data-category="orange">
           <div class="card-header">
-            <span class="card-title" style="color: #fb923c;">🟠 Дистанція реакції: Середньошвидкісні цілі (~180 км/год)</span>
-            <span class="card-meta">Швидкість: ~180 км/год (~3 км/хв)</span>
+            <span class="card-title" style="color: #fb923c;">рџџ  Р”РёСЃС‚Р°РЅС†С–СЏ СЂРµР°РєС†С–С—: РЎРµСЂРµРґРЅСЊРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С– (~180 РєРј/РіРѕРґ)</span>
+            <span class="card-meta">РЁРІРёРґРєС–СЃС‚СЊ: ~180 РєРј/РіРѕРґ (~3 РєРј/С…РІ)</span>
           </div>
           <ul class="threat-list">
-            <li><b>БПЛА «Шахед-136» (Герань-2)</b> — стратегічний ударний безпілотник-камікадзе</li>
-            <li><b>БПЛА «Італмас» (Герань-3)</b> — баражуючий дрон середньої дальності з двигуном DLE</li>
-            <li><b>БПЛА «Гербера» / «Пародія»</b> — ударні дрони та дрони-приманки для виснаження ППО</li>
-            <li><b>БПЛА невстановленого типу</b> — ударні крилаті апарати дального радіусу</li>
+            <li><b>Р‘РџР›Рђ В«РЁР°С…РµРґ-136В» (Р“РµСЂР°РЅСЊ-2)</b> вЂ” СЃС‚СЂР°С‚РµРіС–С‡РЅРёР№ СѓРґР°СЂРЅРёР№ Р±РµР·РїС–Р»РѕС‚РЅРёРє-РєР°РјС–РєР°РґР·Рµ</li>
+            <li><b>Р‘РџР›Рђ В«Р†С‚Р°Р»РјР°СЃВ» (Р“РµСЂР°РЅСЊ-3)</b> вЂ” Р±Р°СЂР°Р¶СѓСЋС‡РёР№ РґСЂРѕРЅ СЃРµСЂРµРґРЅСЊРѕС— РґР°Р»СЊРЅРѕСЃС‚С– Р· РґРІРёРіСѓРЅРѕРј DLE</li>
+            <li><b>Р‘РџР›Рђ В«Р“РµСЂР±РµСЂР°В» / В«РџР°СЂРѕРґС–СЏВ»</b> вЂ” СѓРґР°СЂРЅС– РґСЂРѕРЅРё С‚Р° РґСЂРѕРЅРё-РїСЂРёРјР°РЅРєРё РґР»СЏ РІРёСЃРЅР°Р¶РµРЅРЅСЏ РџРџРћ</li>
+            <li><b>Р‘РџР›Рђ РЅРµРІСЃС‚Р°РЅРѕРІР»РµРЅРѕРіРѕ С‚РёРїСѓ</b> вЂ” СѓРґР°СЂРЅС– РєСЂРёР»Р°С‚С– Р°РїР°СЂР°С‚Рё РґР°Р»СЊРЅРѕРіРѕ СЂР°РґС–СѓСЃСѓ</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Принцип роботи:</b> Забезпечує ~5 хвилин запасу часу для цілей зі швидкістю ~180 км/год (15 км). Якщо Шахед помітять одразу на підльоті за 4 км (у зоні лісу/передмістя), він <b>не стає Молнією</b> — бот сповістить саме про Шахед з точним розрахунком часу (~1.5 хв)!
+            рџЋЇ <b>РџСЂРёРЅС†РёРї СЂРѕР±РѕС‚Рё:</b> Р—Р°Р±РµР·РїРµС‡СѓС” ~5 С…РІРёР»РёРЅ Р·Р°РїР°СЃСѓ С‡Р°СЃСѓ РґР»СЏ С†С–Р»РµР№ Р·С– С€РІРёРґРєС–СЃС‚СЋ ~180 РєРј/РіРѕРґ (15 РєРј). РЇРєС‰Рѕ РЁР°С…РµРґ РїРѕРјС–С‚СЏС‚СЊ РѕРґСЂР°Р·Сѓ РЅР° РїС–РґР»СЊРѕС‚С– Р·Р° 4 РєРј (Сѓ Р·РѕРЅС– Р»С–СЃСѓ/РїРµСЂРµРґРјС–СЃС‚СЏ), РІС–РЅ <b>РЅРµ СЃС‚Р°С” РњРѕР»РЅС–С”СЋ</b> вЂ” Р±РѕС‚ СЃРїРѕРІС–СЃС‚РёС‚СЊ СЃР°РјРµ РїСЂРѕ РЁР°С…РµРґ Р· С‚РѕС‡РЅРёРј СЂРѕР·СЂР°С…СѓРЅРєРѕРј С‡Р°СЃСѓ (~1.5 С…РІ)!
           </div>
         </div>
 
         <!-- Red Card -->
         <div class="threat-card card-red" data-category="red">
           <div class="card-header">
-            <span class="card-title" style="color: #f87171;">🔴 Дистанція реакції: Високошвидкісні цілі (~500 км/год)</span>
-            <span class="card-meta">Швидкість: ~500–600 км/год (~8.3–10 км/хв)</span>
+            <span class="card-title" style="color: #f87171;">рџ”ґ Р”РёСЃС‚Р°РЅС†С–СЏ СЂРµР°РєС†С–С—: Р’РёСЃРѕРєРѕС€РІРёРґРєС–СЃРЅС– С†С–Р»С– (~500 РєРј/РіРѕРґ)</span>
+            <span class="card-meta">РЁРІРёРґРєС–СЃС‚СЊ: ~500вЂ“600 РєРј/РіРѕРґ (~8.3вЂ“10 РєРј/С…РІ)</span>
           </div>
           <ul class="threat-list">
-            <li><b>Реактивні БПЛА</b> — безпілотники з турбореактивним двигуном підвищеної швидкості</li>
-            <li><b>БПЛА «Бандероль»</b> — реактивні швидкісні ударні дрони</li>
-            <li><b>КАБ / УМПБ Д-30</b> — керовані авіаційні бомби та планеруючі боєприпаси тактичної авіації</li>
+            <li><b>Р РµР°РєС‚РёРІРЅС– Р‘РџР›Рђ</b> вЂ” Р±РµР·РїС–Р»РѕС‚РЅРёРєРё Р· С‚СѓСЂР±РѕСЂРµР°РєС‚РёРІРЅРёРј РґРІРёРіСѓРЅРѕРј РїС–РґРІРёС‰РµРЅРѕС— С€РІРёРґРєРѕСЃС‚С–</li>
+            <li><b>Р‘РџР›Рђ В«Р‘Р°РЅРґРµСЂРѕР»СЊВ»</b> вЂ” СЂРµР°РєС‚РёРІРЅС– С€РІРёРґРєС–СЃРЅС– СѓРґР°СЂРЅС– РґСЂРѕРЅРё</li>
+            <li><b>РљРђР‘ / РЈРњРџР‘ Р”-30</b> вЂ” РєРµСЂРѕРІР°РЅС– Р°РІС–Р°С†С–Р№РЅС– Р±РѕРјР±Рё С‚Р° РїР»Р°РЅРµСЂСѓСЋС‡С– Р±РѕС”РїСЂРёРїР°СЃРё С‚Р°РєС‚РёС‡РЅРѕС— Р°РІС–Р°С†С–С—</li>
           </ul>
           <div class="card-rule">
-            🎯 <b>Принцип роботи:</b> Забезпечує 3–4 хвилини для надшвидкісних об'єктів. При швидкості 500 км/год за 7 км лишається менше 50 секунд, тому для КАБ потрібен широкий радіус спостереження (30 км).
+            рџЋЇ <b>РџСЂРёРЅС†РёРї СЂРѕР±РѕС‚Рё:</b> Р—Р°Р±РµР·РїРµС‡СѓС” 3вЂ“4 С…РІРёР»РёРЅРё РґР»СЏ РЅР°РґС€РІРёРґРєС–СЃРЅРёС… РѕР±'С”РєС‚С–РІ. РџСЂРё С€РІРёРґРєРѕСЃС‚С– 500 РєРј/РіРѕРґ Р·Р° 7 РєРј Р»РёС€Р°С”С‚СЊСЃСЏ РјРµРЅС€Рµ 50 СЃРµРєСѓРЅРґ, С‚РѕРјСѓ РґР»СЏ РљРђР‘ РїРѕС‚СЂС–Р±РµРЅ С€РёСЂРѕРєРёР№ СЂР°РґС–СѓСЃ СЃРїРѕСЃС‚РµСЂРµР¶РµРЅРЅСЏ (30 РєРј).
           </div>
         </div>
 
         <!-- Bypass Card (Out of zones) -->
         <div class="threat-card card-bypass" data-category="bypass">
           <div class="card-header">
-            <span class="card-title" style="color: #c084fc;">⚡ ПОЗА ЗОНАМИ: Критичні загрози (Попередження ЗАВЖДИ)</span>
-            <span class="card-meta" style="background: rgba(168, 85, 247, 0.25); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.5);">ПОВНИЙ БАЙПАС РАДІУСІВ</span>
+            <span class="card-title" style="color: #c084fc;">вљЎ РџРћР—Рђ Р—РћРќРђРњР: РљСЂРёС‚РёС‡РЅС– Р·Р°РіСЂРѕР·Рё (РџРѕРїРµСЂРµРґР¶РµРЅРЅСЏ Р—РђР’Р–Р”Р)</span>
+            <span class="card-meta" style="background: rgba(168, 85, 247, 0.25); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.5);">РџРћР’РќРР™ Р‘РђР™РџРђРЎ Р РђР”Р†РЈРЎР†Р’</span>
           </div>
           <ul class="threat-list">
-            <li><b>Балістичні ракети:</b> «Іскандер-М», KN-23 (швидкість >6000 км/год, час підльоту до Харкова ~60–90 сек)</li>
-            <li><b>ЗРК у режимі «земля-земля»:</b> С-300 / С-400 (підльот за 40–80 секунд з прикордоння)</li>
-            <li><b>Аеробалістика та гіперзвук:</b> Х-47М2 «Кинджал», 3М22 «Циркон»</li>
-            <li><b>РСЗВ (Торнадо-С, Смерч, Ураган):</b> загроза обстрілу міста або безпосередньо обраного вами сектора</li>
-            <li><b>Директиви екстреної небезпеки:</b> загальноміські (<i>«Харків — в укриття»</i>, <i>«Всі в укриття»</i>), а також локальні виклики (<i>«[Ваш район / сектор] — в укриття»</i>), які бот динамічно прив'язує до встановленої вами точки на карті (Олексіївка, ХТЗ, Салтівка, Холодна Гора, Центр тощо).</li>
+            <li><b>Р‘Р°Р»С–СЃС‚РёС‡РЅС– СЂР°РєРµС‚Рё:</b> В«Р†СЃРєР°РЅРґРµСЂ-РњВ», KN-23 (С€РІРёРґРєС–СЃС‚СЊ >6000 РєРј/РіРѕРґ, С‡Р°СЃ РїС–РґР»СЊРѕС‚Сѓ РґРѕ РҐР°СЂРєРѕРІР° ~60вЂ“90 СЃРµРє)</li>
+            <li><b>Р—Р Рљ Сѓ СЂРµР¶РёРјС– В«Р·РµРјР»СЏ-Р·РµРјР»СЏВ»:</b> РЎ-300 / РЎ-400 (РїС–РґР»СЊРѕС‚ Р·Р° 40вЂ“80 СЃРµРєСѓРЅРґ Р· РїСЂРёРєРѕСЂРґРѕРЅРЅСЏ)</li>
+            <li><b>РђРµСЂРѕР±Р°Р»С–СЃС‚РёРєР° С‚Р° РіС–РїРµСЂР·РІСѓРє:</b> РҐ-47Рњ2 В«РљРёРЅРґР¶Р°Р»В», 3Рњ22 В«Р¦РёСЂРєРѕРЅВ»</li>
+            <li><b>Р РЎР—Р’ (РўРѕСЂРЅР°РґРѕ-РЎ, РЎРјРµСЂС‡, РЈСЂР°РіР°РЅ):</b> Р·Р°РіСЂРѕР·Р° РѕР±СЃС‚СЂС–Р»Сѓ РјС–СЃС‚Р° Р°Р±Рѕ Р±РµР·РїРѕСЃРµСЂРµРґРЅСЊРѕ РѕР±СЂР°РЅРѕРіРѕ РІР°РјРё СЃРµРєС‚РѕСЂР°</li>
+            <li><b>Р”РёСЂРµРєС‚РёРІРё РµРєСЃС‚СЂРµРЅРѕС— РЅРµР±РµР·РїРµРєРё:</b> Р·Р°РіР°Р»СЊРЅРѕРјС–СЃСЊРєС– (<i>В«РҐР°СЂРєС–РІ вЂ” РІ СѓРєСЂРёС‚С‚СЏВ»</i>, <i>В«Р’СЃС– РІ СѓРєСЂРёС‚С‚СЏВ»</i>), Р° С‚Р°РєРѕР¶ Р»РѕРєР°Р»СЊРЅС– РІРёРєР»РёРєРё (<i>В«[Р’Р°С€ СЂР°Р№РѕРЅ / СЃРµРєС‚РѕСЂ] вЂ” РІ СѓРєСЂРёС‚С‚СЏВ»</i>), СЏРєС– Р±РѕС‚ РґРёРЅР°РјС–С‡РЅРѕ РїСЂРёРІ'СЏР·СѓС” РґРѕ РІСЃС‚Р°РЅРѕРІР»РµРЅРѕС— РІР°РјРё С‚РѕС‡РєРё РЅР° РєР°СЂС‚С– (РћР»РµРєСЃС–С—РІРєР°, РҐРўР—, РЎР°Р»С‚С–РІРєР°, РҐРѕР»РѕРґРЅР° Р“РѕСЂР°, Р¦РµРЅС‚СЂ С‚РѕС‰Рѕ).</li>
           </ul>
           <div class="card-rule" style="border-top-color: rgba(168, 85, 247, 0.3); color: #e2e8f0;">
-            🚨 <b>Протокол пусків з прикордоння:</b><br>
-            • Сигнали про виходи/пуски: <i>«вихід з БНР / Бєлгорода», «швидкісна з Бєлгорода», «вихід з Курська», «вихід з Воронежа», «вихід з Міллерово»</i> — <b>ЗАВЖДИ викликають негайну тривогу</b>, якщо напрямок не вказано або веде на Харків / область.<br>
-            • <b>Фільтр відсікання інших міст:</b> Якщо в повідомленні чітко зазначено вектор на інші регіони (<i>«вихід з Бєлгорода на Дніпро», «на Полтаву», «на Київ», «на Суми»</i> тощо) — бот <b>не турбує</b> хибними тривогами.
+            рџљЁ <b>РџСЂРѕС‚РѕРєРѕР» РїСѓСЃРєС–РІ Р· РїСЂРёРєРѕСЂРґРѕРЅРЅСЏ:</b><br>
+            вЂў РЎРёРіРЅР°Р»Рё РїСЂРѕ РІРёС…РѕРґРё/РїСѓСЃРєРё: <i>В«РІРёС…С–Рґ Р· Р‘РќР  / Р‘С”Р»РіРѕСЂРѕРґР°В», В«С€РІРёРґРєС–СЃРЅР° Р· Р‘С”Р»РіРѕСЂРѕРґР°В», В«РІРёС…С–Рґ Р· РљСѓСЂСЃСЊРєР°В», В«РІРёС…С–Рґ Р· Р’РѕСЂРѕРЅРµР¶Р°В», В«РІРёС…С–Рґ Р· РњС–Р»Р»РµСЂРѕРІРѕВ»</i> вЂ” <b>Р—РђР’Р–Р”Р РІРёРєР»РёРєР°СЋС‚СЊ РЅРµРіР°Р№РЅСѓ С‚СЂРёРІРѕРіСѓ</b>, СЏРєС‰Рѕ РЅР°РїСЂСЏРјРѕРє РЅРµ РІРєР°Р·Р°РЅРѕ Р°Р±Рѕ РІРµРґРµ РЅР° РҐР°СЂРєС–РІ / РѕР±Р»Р°СЃС‚СЊ.<br>
+            вЂў <b>Р¤С–Р»СЊС‚СЂ РІС–РґСЃС–РєР°РЅРЅСЏ С–РЅС€РёС… РјС–СЃС‚:</b> РЇРєС‰Рѕ РІ РїРѕРІС–РґРѕРјР»РµРЅРЅС– С‡С–С‚РєРѕ Р·Р°Р·РЅР°С‡РµРЅРѕ РІРµРєС‚РѕСЂ РЅР° С–РЅС€С– СЂРµРіС–РѕРЅРё (<i>В«РІРёС…С–Рґ Р· Р‘С”Р»РіРѕСЂРѕРґР° РЅР° Р”РЅС–РїСЂРѕВ», В«РЅР° РџРѕР»С‚Р°РІСѓВ», В«РЅР° РљРёС—РІВ», В«РЅР° РЎСѓРјРёВ»</i> С‚РѕС‰Рѕ) вЂ” Р±РѕС‚ <b>РЅРµ С‚СѓСЂР±СѓС”</b> С…РёР±РЅРёРјРё С‚СЂРёРІРѕРіР°РјРё.
           </div>
         </div>
 
@@ -1379,7 +1426,7 @@
     const osmDark = L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
       maxZoom: 18,
       className: 'osm-dark-tiles',
-      attribution: '© OpenStreetMap'
+      attribution: 'В© OpenStreetMap'
     });
 
     const esriDark = L.layerGroup([
@@ -1398,9 +1445,9 @@
     // Zoom and Layer controls
     L.control.zoom({ position: 'topright' }).addTo(map);
     L.control.layers({
-      "🗺 Радар (OSM Dark)": osmDark,
-      "🏙 Esri Dark Canvas": esriDark,
-      "🛰 Супутник (Satellite)": esriSatellite
+      "рџ—є Р Р°РґР°СЂ (OSM Dark)": osmDark,
+      "рџЏ™ Esri Dark Canvas": esriDark,
+      "рџ›° РЎСѓРїСѓС‚РЅРёРє (Satellite)": esriSatellite
     }, null, { position: 'topright' }).addTo(map);
 
     // Custom Pulsing Radar Marker
@@ -1485,7 +1532,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     const labelKharkiv = L.marker([49.95, 36.35], {
       icon: L.divIcon({
         className: 'region-badge-label',
-        html: '<div class="region-pill">🛡 Харківщина • Моніторинг активний</div>'
+        html: '<div class="region-pill">рџ›Ў РҐР°СЂРєС–РІС‰РёРЅР° вЂў РњРѕРЅС–С‚РѕСЂРёРЅРі Р°РєС‚РёРІРЅРёР№</div>'
       }),
       interactive: false
     }).addTo(map);
@@ -1493,7 +1540,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     const labelDnipro = L.marker([48.45, 35.05], {
       icon: L.divIcon({
         className: 'region-badge-label',
-        html: '<div class="region-pill">🛡 Дніпропетровщина • Моніторинг активний</div>'
+        html: '<div class="region-pill">рџ›Ў Р”РЅС–РїСЂРѕРїРµС‚СЂРѕРІС‰РёРЅР° вЂў РњРѕРЅС–С‚РѕСЂРёРЅРі Р°РєС‚РёРІРЅРёР№</div>'
       }),
       interactive: false
     }).addTo(map);
@@ -1523,22 +1570,22 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     // TTX Specifications and calculation
     const threatTTX = {
       yellow: {
-        title: 'Малі ударні БПЛА (Молнія, FPV, Ланцет)',
+        title: 'РњР°Р»С– СѓРґР°СЂРЅС– Р‘РџР›Рђ (РњРѕР»РЅС–СЏ, FPV, Р›Р°РЅС†РµС‚)',
         avgSpeed: 90, // km/h
-        speedLabel: '~90 км/год',
-        emoji: '🟡'
+        speedLabel: '~90 РєРј/РіРѕРґ',
+        emoji: 'рџџЎ'
       },
       orange: {
-        title: 'Дальні ударні БПЛА (Шахед, Герань, Гербера)',
+        title: 'Р”Р°Р»СЊРЅС– СѓРґР°СЂРЅС– Р‘РџР›Рђ (РЁР°С…РµРґ, Р“РµСЂР°РЅСЊ, Р“РµСЂР±РµСЂР°)',
         avgSpeed: 180, // km/h
-        speedLabel: '~180 км/год',
-        emoji: '🟠'
+        speedLabel: '~180 РєРј/РіРѕРґ',
+        emoji: 'рџџ '
       },
       red: {
-        title: 'Швидкісні цілі (Реактивні БПЛА, КАБ)',
+        title: 'РЁРІРёРґРєС–СЃРЅС– С†С–Р»С– (Р РµР°РєС‚РёРІРЅС– Р‘РџР›Рђ, РљРђР‘)',
         avgSpeed: 500, // km/h
-        speedLabel: '~500 км/год',
-        emoji: '🔴'
+        speedLabel: '~500 РєРј/РіРѕРґ',
+        emoji: 'рџ”ґ'
       }
     };
 
@@ -1550,12 +1597,12 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const secs = Math.round((totalMinutes - mins) * 60);
 
       if (mins === 0) {
-        return `~${secs} сек`;
+        return `~${secs} СЃРµРє`;
       } else if (secs === 0 || secs >= 50) {
         const roundedMins = secs >= 50 ? mins + 1 : mins;
-        return `~${roundedMins} хв`;
+        return `~${roundedMins} С…РІ`;
       } else {
-        return `~${mins} хв ${secs} сек`;
+        return `~${mins} С…РІ ${secs} СЃРµРє`;
       }
     }
 
@@ -1570,11 +1617,11 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const toast = document.getElementById('ttx-toast');
       toast.className = `ttx-toast visible theme-${zone}`;
       
-      document.getElementById('ttx-icon').innerText = '⏱';
-      document.getElementById('ttx-label').innerText = `${ttx.emoji} Час реакції на загрозу приблизно:`;
+      document.getElementById('ttx-icon').innerText = 'вЏ±';
+      document.getElementById('ttx-label').innerText = `${ttx.emoji} Р§Р°СЃ СЂРµР°РєС†С–С— РЅР° Р·Р°РіСЂРѕР·Сѓ РїСЂРёР±Р»РёР·РЅРѕ:`;
       document.getElementById('ttx-time').innerText = timeStr;
       document.getElementById('ttx-desc').innerHTML = 
-        `Розраховано за ТТХ: <b>${ttx.title}</b> (крейсерська швидкість <b>${ttx.speedLabel}</b>) при прямому курсі на радіус <b>${radiusKm} км</b>`;
+        `Р РѕР·СЂР°С…РѕРІР°РЅРѕ Р·Р° РўРўРҐ: <b>${ttx.title}</b> (РєСЂРµР№СЃРµСЂСЃСЊРєР° С€РІРёРґРєС–СЃС‚СЊ <b>${ttx.speedLabel}</b>) РїСЂРё РїСЂСЏРјРѕРјСѓ РєСѓСЂСЃС– РЅР° СЂР°РґС–СѓСЃ <b>${radiusKm} РєРј</b>`;
 
       // Cancel any previous timer immediately and give 15s if no other slider is touched
       clearTimeout(ttxTimer);
@@ -1611,9 +1658,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       document.getElementById('val-red').innerText = r;
 
       // Right-edge badge displays approximate approach time!
-      document.getElementById('val-yellow-time').innerText = `⏱ ${formatTimeEstimate(y, threatTTX.yellow.avgSpeed)}`;
-      document.getElementById('val-orange-time').innerText = `⏱ ${formatTimeEstimate(o, threatTTX.orange.avgSpeed)}`;
-      document.getElementById('val-red-time').innerText = `⏱ ${formatTimeEstimate(r, threatTTX.red.avgSpeed)}`;
+      document.getElementById('val-yellow-time').innerText = `вЏ± ${formatTimeEstimate(y, threatTTX.yellow.avgSpeed)}`;
+      document.getElementById('val-orange-time').innerText = `вЏ± ${formatTimeEstimate(o, threatTTX.orange.avgSpeed)}`;
+      document.getElementById('val-red-time').innerText = `вЏ± ${formatTimeEstimate(r, threatTTX.red.avgSpeed)}`;
 
       circleYellow.setRadius(y * 1000);
       circleOrange.setRadius(o * 1000);
@@ -1623,13 +1670,13 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const tlValY = document.getElementById('tl-val-yellow');
       const tlValO = document.getElementById('tl-val-orange');
       const tlValR = document.getElementById('tl-val-red');
-      if (tlValY) tlValY.innerText = `${y}к`;
-      if (tlValO) tlValO.innerText = `${o}к`;
-      if (tlValR) tlValR.innerText = `${r}к`;
+      if (tlValY) tlValY.innerText = `${y}Рє`;
+      if (tlValO) tlValO.innerText = `${o}Рє`;
+      if (tlValR) tlValR.innerText = `${r}Рє`;
 
       const mcbText = document.getElementById('mcb-text');
       if (mcbText) {
-        mcbText.innerText = `🟡 ${y}км • 🟠 ${o}км • 🔴 ${r}км`;
+        mcbText.innerText = `рџџЎ ${y}РєРј вЂў рџџ  ${o}РєРј вЂў рџ”ґ ${r}РєРј`;
       }
 
       if (activeZone) {
@@ -1638,7 +1685,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     }
 
     // ==========================================================================
-    // Mobile "Traffic Light" (Світлофор) Controller
+    // Mobile "Traffic Light" (РЎРІС–С‚Р»РѕС„РѕСЂ) Controller
     // ==========================================================================
     let currentMobileZone = 'yellow';
     let isMobileCollapsed = false;
@@ -1687,7 +1734,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const arrow = document.getElementById('tl-toggle-arrow');
       if (panel) panel.classList.add('collapsed');
       if (bar) bar.classList.add('visible');
-      if (arrow) arrow.innerText = '▲';
+      if (arrow) arrow.innerText = 'в–І';
     }
 
     function expandMobilePanel() {
@@ -1697,7 +1744,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const arrow = document.getElementById('tl-toggle-arrow');
       if (panel) panel.classList.remove('collapsed');
       if (bar) bar.classList.remove('visible');
-      if (arrow) arrow.innerText = '▼';
+      if (arrow) arrow.innerText = 'в–ј';
     }
 
     // Switch presets
@@ -1739,13 +1786,13 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const btn = document.querySelector('.btn-save');
       const origText = btn.innerHTML;
       btn.classList.add('saved');
-      btn.innerHTML = '✅ Збережено успішно!';
+      btn.innerHTML = 'вњ… Р—Р±РµСЂРµР¶РµРЅРѕ СѓСЃРїС–С€РЅРѕ!';
 
       // Show prominent on-screen toast
       const toast = document.getElementById('save-success-toast');
       const descEl = document.getElementById('save-toast-desc');
       if (descEl) {
-        descEl.innerText = `Точка: ${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} км, 🟠 ${o} км, 🔴 ${r} км`;
+        descEl.innerText = `РўРѕС‡РєР°: ${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Р Р°РґС–СѓСЃРё: рџџЎ ${y} РєРј, рџџ  ${o} РєРј, рџ”ґ ${r} РєРј`;
       }
       if (toast) {
         toast.classList.add('visible');
@@ -1869,11 +1916,45 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         });
     }
 
-    // Notify Telegram that WebApp is ready
+    // Configure Telegram WebApp and lock down swipe-to-close gestures
     if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
+      try {
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
+          window.Telegram.WebApp.disableVerticalSwipes();
+        }
+      } catch (e) {
+        console.warn('Telegram WebApp configuration error:', e);
+      }
     }
+
+    // Touch event guard for mobile browsers to block vertical pull-to-dismiss bounces
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches && e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+      // Allow internal scrolling in modal dialog
+      if (e.target.closest('#modal-cards-container')) {
+        return;
+      }
+      // Allow native interaction on slider range inputs
+      if (e.target.closest('input[type="range"]')) {
+        return;
+      }
+      // If single finger dragging down at top of viewport, prevent Telegram pull-down
+      if (e.touches && e.touches.length === 1) {
+        if (window.scrollY <= 0 && e.touches[0].clientY > touchStartY) {
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+        }
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
