@@ -1125,9 +1125,8 @@
       <span class="brand-badge">Фільтр реальних загроз</span>
     </div>
     <div class="preset-selector">
-      <button class="preset-btn active" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
+      <button class="preset-btn" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
       <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
-      
     </div>
   </div>
 
@@ -1372,20 +1371,24 @@
     };
     let currentPreset = 'home';
 
+    // 1. First restore from localStorage (instant cache)
+    try {
+      const savedActive = localStorage.getItem('skyshield_active_preset');
+      if (savedActive && (savedActive === 'work' || savedActive === 'home')) {
+        currentPreset = savedActive;
+      }
+      const savedPresets = JSON.parse(localStorage.getItem('skyshield_presets'));
+      if (savedPresets && savedPresets.home && savedPresets.work) {
+        presets = savedPresets;
+      }
+    } catch (e) {}
+
     const urlParams = new URLSearchParams(window.location.search);
     let targetUserId = null;
     if (urlParams.has('uid')) {
       targetUserId = parseInt(urlParams.get('uid')) || null;
     } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
       targetUserId = window.Telegram.WebApp.initDataUnsafe.user.id;
-    }
-
-    // 1. Read preset from URL if present
-    if (urlParams.has('preset')) {
-      const p = urlParams.get('preset').toLowerCase();
-      if (p === 'work' || p === 'home') {
-        currentPreset = p;
-      }
     }
 
     // 2. Read explicit preset parameters from URL
@@ -1402,29 +1405,12 @@
       if (urlParams.has('w_r')) presets.work.red = parseInt(urlParams.get('w_r'));
     }
 
-    // 3. Fallback active coordinates and radii from URL
-    if (urlParams.has('lat') && urlParams.has('lon')) {
-      const pLat = parseFloat(urlParams.get('lat'));
-      const pLon = parseFloat(urlParams.get('lon'));
-      if (!isNaN(pLat) && !isNaN(pLon)) {
-        if (presets[currentPreset]) {
-          presets[currentPreset].coords = [pLat, pLon];
-        }
+    // 3. Preset parameter from URL
+    if (urlParams.has('preset')) {
+      const p = urlParams.get('preset').toLowerCase();
+      if (p === 'work' || p === 'home') {
+        currentPreset = p;
       }
-      if (urlParams.has('y') && presets[currentPreset]) presets[currentPreset].yellow = parseInt(urlParams.get('y')) || presets[currentPreset].yellow;
-      if (urlParams.has('o') && presets[currentPreset]) presets[currentPreset].orange = parseInt(urlParams.get('o')) || presets[currentPreset].orange;
-      if (urlParams.has('r') && presets[currentPreset]) presets[currentPreset].red = parseInt(urlParams.get('r')) || presets[currentPreset].red;
-    } else {
-      try {
-        const savedPresets = JSON.parse(localStorage.getItem('skyshield_presets'));
-        if (savedPresets && savedPresets.home && savedPresets.work) {
-          presets = savedPresets;
-        }
-        const savedActive = localStorage.getItem('skyshield_active_preset');
-        if (savedActive && (savedActive === 'work' || savedActive === 'home')) {
-          currentPreset = savedActive;
-        }
-      } catch (e) {}
     }
 
     let userCoords = presets[currentPreset].coords;
@@ -1964,8 +1950,11 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
             };
           }
         }
-        if (!urlParams.has('preset') && cfg.preset && (cfg.preset === 'home' || cfg.preset === 'work')) {
+        if (cfg.preset && (cfg.preset === 'home' || cfg.preset === 'work')) {
           currentPreset = cfg.preset;
+          try {
+            localStorage.setItem('skyshield_active_preset', currentPreset);
+          } catch(e) {}
         }
 
         const activeP = presets[currentPreset];
