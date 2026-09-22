@@ -744,6 +744,307 @@
       text-align: center;
       margin-top: 8px;
     }
+
+    /* ==========================================================================
+       MOBILE RESPONSIVE "TRAFFIC LIGHT" (СВІТЛОФОР) REDESIGN
+       Desktop remains 100% unaffected via @media (min-width: 769px)
+       ========================================================================== */
+
+    /* Desktop overrides: ensure mobile widgets are hidden and all 3 sliders are visible */
+    @media (min-width: 769px) {
+      .traffic-light-widget,
+      .mobile-collapsed-bar,
+      .mobile-drag-handle,
+      .mobile-only {
+        display: none !important;
+      }
+      .control-panel {
+        display: block !important;
+        transform: translateX(-50%) !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+      .slider-group {
+        display: block !important;
+      }
+    }
+
+    /* Common classes for mobile elements */
+    .mobile-only {
+      display: none;
+    }
+
+    .threat-subtext {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    /* Mobile view styling (max-width: 768px) */
+    @media (max-width: 768px) {
+      .mobile-only {
+        display: block !important;
+      }
+
+      .desktop-only {
+        display: none !important;
+      }
+
+      /* Compact Top App Header */
+      .app-header {
+        width: calc(100% - 16px);
+        top: 8px;
+        padding: 8px 12px;
+        border-radius: 12px;
+      }
+
+      .brand-title {
+        font-size: 13.5px;
+      }
+
+      .brand-badge {
+        display: none;
+      }
+
+      .preset-btn {
+        padding: 5px 8px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+
+      /* Traffic Light Widget on right screen edge */
+      .traffic-light-widget {
+        position: absolute;
+        right: 10px;
+        top: 46%;
+        transform: translateY(-50%);
+        z-index: 1001;
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 26px;
+        padding: 8px 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+
+      .traffic-light-title {
+        font-size: 8px;
+        font-weight: 800;
+        color: #94a3b8;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+      }
+
+      .tl-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity: 0.65;
+        padding: 0;
+        outline: none;
+      }
+
+      .tl-btn .tl-emoji {
+        font-size: 14px;
+        line-height: 1;
+      }
+
+      .tl-btn .tl-val {
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1;
+        margin-top: 2px;
+      }
+
+      .tl-btn-yellow .tl-val { color: #facc15; }
+      .tl-btn-orange .tl-val { color: #fb923c; }
+      .tl-btn-red .tl-val { color: #f87171; }
+
+      /* Active highlighted states for Traffic Light buttons */
+      .tl-btn-yellow.active {
+        opacity: 1;
+        border: 2px solid #eab308;
+        background: rgba(234, 179, 8, 0.25);
+        box-shadow: 0 0 16px rgba(234, 179, 8, 0.5);
+        transform: scale(1.1);
+      }
+
+      .tl-btn-orange.active {
+        opacity: 1;
+        border: 2px solid #f97316;
+        background: rgba(249, 115, 22, 0.25);
+        box-shadow: 0 0 16px rgba(249, 115, 22, 0.5);
+        transform: scale(1.1);
+      }
+
+      .tl-btn-red.active {
+        opacity: 1;
+        border: 2px solid #ef4444;
+        background: rgba(239, 68, 68, 0.25);
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+        transform: scale(1.1);
+      }
+
+      .tl-btn-toggle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #cbd5e1;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        margin-top: 2px;
+        transition: all 0.2s;
+        outline: none;
+      }
+
+      .tl-btn-toggle:active {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.95);
+      }
+
+      /* Compact Bottom Control Panel on Mobile */
+      .control-panel {
+        width: calc(100% - 16px);
+        max-width: none;
+        bottom: 8px;
+        padding: 8px 14px 12px 14px;
+        border-radius: 18px;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      }
+
+      .control-panel.collapsed {
+        transform: translateX(-50%) translateY(120%);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .mobile-drag-handle {
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 3px;
+        margin: 0 auto 8px auto;
+        cursor: pointer;
+      }
+
+      .panel-row {
+        margin-bottom: 6px;
+      }
+
+      /* Show only the single active slider group on mobile */
+      .slider-group {
+        display: none;
+        margin-bottom: 8px;
+      }
+
+      .slider-group.mobile-active {
+        display: block;
+        animation: fadeInSlider 0.22s ease-out;
+      }
+
+      @keyframes fadeInSlider {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .slider-header {
+        font-size: 12px;
+        margin-bottom: 4px;
+      }
+
+      .radius-badge {
+        font-size: 12px;
+        padding: 1px 6px;
+      }
+
+      .badge-right {
+        font-size: 11px;
+        padding: 2px 6px;
+      }
+
+      .btn-save {
+        padding: 10px;
+        font-size: 13.5px;
+        border-radius: 10px;
+      }
+
+      .info-tag {
+        font-size: 10px;
+        margin-top: 5px;
+      }
+
+      /* Collapsed Bottom Status Pill */
+      .mobile-collapsed-bar {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        z-index: 1000;
+        background: rgba(15, 23, 42, 0.96);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        padding: 8px 12px;
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, 0.8);
+        cursor: pointer;
+        animation: slideUpPill 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .mobile-collapsed-bar.visible {
+        display: flex;
+      }
+
+      @keyframes slideUpPill {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+
+      .mcb-content {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #f1f5f9;
+      }
+
+      .mcb-btn-save {
+        background: var(--accent-primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+      }
+    }
   </style>
 </head>
 <body>
@@ -755,8 +1056,9 @@
       <span class="brand-badge">Фільтр реальних загроз</span>
     </div>
     <div class="preset-selector">
-      <button class="preset-btn active" onclick="selectPreset('home')">🏠 Дім</button>
-      <button class="preset-btn" onclick="selectPreset('work')">💼 Робота</button>
+      <button class="preset-btn active" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
+      <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
+      <button class="preset-btn" id="btn-quick-region" onclick="toggleRegionJump()" title="Швидкий перехід Харків / Самар">📍 Регіон</button>
     </div>
   </div>
 
@@ -772,8 +1074,46 @@
   <!-- Map Container -->
   <div id="map"></div>
 
+  <!-- Vertical Traffic Light Widget (Mobile Only) -->
+  <div id="traffic-light-widget" class="traffic-light-widget">
+    <div class="traffic-light-title">ЗОНИ</div>
+    
+    <button id="tl-btn-yellow" class="tl-btn tl-btn-yellow active" onclick="selectMobileZone('yellow')" title="Малошвидкісні цілі">
+      <span class="tl-emoji">🟡</span>
+      <span id="tl-val-yellow" class="tl-val">7к</span>
+    </button>
+    
+    <button id="tl-btn-orange" class="tl-btn tl-btn-orange" onclick="selectMobileZone('orange')" title="Середньошвидкісні цілі">
+      <span class="tl-emoji">🟠</span>
+      <span id="tl-val-orange" class="tl-val">15к</span>
+    </button>
+    
+    <button id="tl-btn-red" class="tl-btn tl-btn-red" onclick="selectMobileZone('red')" title="Високошвидкісні цілі">
+      <span class="tl-emoji">🔴</span>
+      <span id="tl-val-red" class="tl-val">30к</span>
+    </button>
+
+    <button id="tl-btn-toggle" class="tl-btn-toggle" onclick="toggleMobilePanel()" title="Згорнути / розгорнути панель">
+      <span id="tl-toggle-arrow">▼</span>
+    </button>
+  </div>
+
+  <!-- Mobile Collapsed Bottom Pill (Displayed when panel is collapsed) -->
+  <div id="mobile-collapsed-bar" class="mobile-collapsed-bar" onclick="expandMobilePanel()">
+    <div class="mcb-content">
+      <span style="font-size: 14px;">🛡</span>
+      <span id="mcb-text">🟡 7км • 🟠 15км • 🔴 30км</span>
+    </div>
+    <button class="mcb-btn-save" onclick="event.stopPropagation(); saveSettings()">
+      💾 Зберегти
+    </button>
+  </div>
+
   <!-- Bottom Control Panel -->
   <div class="control-panel">
+    <!-- Drag Handle for Mobile Touch ergonomics -->
+    <div class="mobile-drag-handle" onclick="toggleMobilePanel()"></div>
+
     <!-- Floating TTX Estimation Toast (above panel) -->
     <div id="ttx-toast" class="ttx-toast" onmouseenter="pauseTTXTimer()" onmouseleave="resumeTTXTimer()">
       <div id="ttx-icon" class="ttx-icon">⏱</div>
@@ -798,7 +1138,7 @@
     </div>
 
     <!-- Yellow Zone: Small Strike UAV (Molniya, FPV, Lancet) -->
-    <div class="slider-group">
+    <div id="group-yellow" class="slider-group mobile-active">
       <div class="slider-header">
         <div class="slider-left">
           <span>🟡</span>
@@ -810,11 +1150,12 @@
           <span id="val-yellow-time" class="badge-right">⏱ ~4 хв 40 сек</span>
         </div>
       </div>
+      <div class="mobile-only threat-subtext">FPV, Молнія, Ланцет (~90 км/год) при підльоті на радіус реакції</div>
       <input type="range" id="range-yellow" min="3" max="15" value="7" oninput="updateRadii('yellow')">
     </div>
 
     <!-- Orange Zone: Long-range Strike UAV (Shahed / Geran / Gerbera) -->
-    <div class="slider-group">
+    <div id="group-orange" class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
           <span>🟠</span>
@@ -826,11 +1167,12 @@
           <span id="val-orange-time" class="badge-right">⏱ ~5 хв</span>
         </div>
       </div>
+      <div class="mobile-only threat-subtext">Шахед, Герань, Гербера (~180 км/год) при прямому векторі на радіус</div>
       <input type="range" id="range-orange" min="8" max="25" value="15" oninput="updateRadii('orange')">
     </div>
 
     <!-- Red Zone: Fast UAV / KAB -->
-    <div class="slider-group">
+    <div id="group-red" class="slider-group">
       <div class="slider-header">
         <div class="slider-left">
           <span>🔴</span>
@@ -842,6 +1184,7 @@
           <span id="val-red-time" class="badge-right">⏱ ~3 хв 36 сек</span>
         </div>
       </div>
+      <div class="mobile-only threat-subtext">КАБ, реактивні БПЛА (~500 км/год) при наближенні на радіус</div>
       <input type="range" id="range-red" min="20" max="50" value="30" oninput="updateRadii('red')">
     </div>
 
@@ -954,20 +1297,24 @@
       : (window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8080');
 
     // Initial coordinates & configuration loading:
-    // 1. URL params (?lat=...&lon=...)
-    // 2. localStorage ('skyshield_user_config')
-    // 3. Defaults (Олексіївка)
-    let userCoords = [50.0570, 36.2030];
+    let userCoords = [50.0597, 36.2120];
     let presets = {
-      home: { coords: [50.0570, 36.2030], yellow: 7, orange: 15, red: 32 },
-      work: { coords: [49.9450, 36.3750], yellow: 5, orange: 12, red: 25 }
+      home: { coords: [50.0597, 36.2120], yellow: 7, orange: 15, red: 33 },
+      work: { coords: [49.9935, 36.2304], yellow: 5, orange: 12, red: 25 }
     };
     let currentPreset = 'home';
     let initialYellow = 7;
     let initialOrange = 15;
-    let initialRed = 32;
+    let initialRed = 33;
 
     const urlParams = new URLSearchParams(window.location.search);
+    let targetUserId = null;
+    if (urlParams.has('uid')) {
+      targetUserId = parseInt(urlParams.get('uid')) || null;
+    } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      targetUserId = window.Telegram.WebApp.initDataUnsafe.user.id;
+    }
+
     if (urlParams.has('lat') && urlParams.has('lon')) {
       const pLat = parseFloat(urlParams.get('lat'));
       const pLon = parseFloat(urlParams.get('lon'));
@@ -976,7 +1323,7 @@
       }
       if (urlParams.has('y')) initialYellow = parseInt(urlParams.get('y')) || 7;
       if (urlParams.has('o')) initialOrange = parseInt(urlParams.get('o')) || 15;
-      if (urlParams.has('r')) initialRed = parseInt(urlParams.get('r')) || 32;
+      if (urlParams.has('r')) initialRed = parseInt(urlParams.get('r')) || 33;
     } else {
       try {
         const localCfg = JSON.parse(localStorage.getItem('skyshield_user_config'));
@@ -992,6 +1339,30 @@
           currentPreset = localCfg.preset;
         }
       } catch (e) {}
+    }
+
+    // Regional presets setup
+    if (userCoords[0] < 49.3) {
+      presets = {
+        home: { coords: [48.6325, 35.2255], yellow: 7, orange: 15, red: 30 },
+        work: { coords: [48.4647, 35.0462], yellow: 5, orange: 12, red: 25 }
+      };
+    }
+
+    function toggleRegionJump() {
+      if (userCoords[0] >= 49.3) {
+        userCoords = [48.6325, 35.2255];
+        presets.home.coords = [48.6325, 35.2255];
+        presets.work.coords = [48.4647, 35.0462];
+        updatePositions(userCoords);
+        map.setView(userCoords, 13);
+      } else {
+        userCoords = [50.0597, 36.2120];
+        presets.home.coords = [50.0597, 36.2120];
+        presets.work.coords = [49.9935, 36.2304];
+        updatePositions(userCoords);
+        map.setView(userCoords, 13);
+      }
     }
 
     // Initialize Map
@@ -1184,9 +1555,85 @@
       circleOrange.setRadius(o * 1000);
       circleRed.setRadius(r * 1000);
 
+      // Traffic Light values & Collapsed bar summary
+      const tlValY = document.getElementById('tl-val-yellow');
+      const tlValO = document.getElementById('tl-val-orange');
+      const tlValR = document.getElementById('tl-val-red');
+      if (tlValY) tlValY.innerText = `${y}к`;
+      if (tlValO) tlValO.innerText = `${o}к`;
+      if (tlValR) tlValR.innerText = `${r}к`;
+
+      const mcbText = document.getElementById('mcb-text');
+      if (mcbText) {
+        mcbText.innerText = `🟡 ${y}км • 🟠 ${o}км • 🔴 ${r}км`;
+      }
+
       if (activeZone) {
         showTTXToast(activeZone);
       }
+    }
+
+    // ==========================================================================
+    // Mobile "Traffic Light" (Світлофор) Controller
+    // ==========================================================================
+    let currentMobileZone = 'yellow';
+    let isMobileCollapsed = false;
+
+    function selectMobileZone(zone) {
+      if (!zone) return;
+      currentMobileZone = zone;
+
+      // Automatically expand panel if user taps a traffic light icon
+      if (isMobileCollapsed) {
+        expandMobilePanel();
+      }
+
+      ['yellow', 'orange', 'red'].forEach(z => {
+        const btn = document.getElementById(`tl-btn-${z}`);
+        const grp = document.getElementById(`group-${z}`);
+        if (btn) {
+          if (z === zone) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
+        if (grp) {
+          if (z === zone) {
+            grp.classList.add('mobile-active');
+          } else {
+            grp.classList.remove('mobile-active');
+          }
+        }
+      });
+    }
+
+    function toggleMobilePanel() {
+      if (isMobileCollapsed) {
+        expandMobilePanel();
+      } else {
+        collapseMobilePanel();
+      }
+    }
+
+    function collapseMobilePanel() {
+      isMobileCollapsed = true;
+      const panel = document.querySelector('.control-panel');
+      const bar = document.getElementById('mobile-collapsed-bar');
+      const arrow = document.getElementById('tl-toggle-arrow');
+      if (panel) panel.classList.add('collapsed');
+      if (bar) bar.classList.add('visible');
+      if (arrow) arrow.innerText = '▲';
+    }
+
+    function expandMobilePanel() {
+      isMobileCollapsed = false;
+      const panel = document.querySelector('.control-panel');
+      const bar = document.getElementById('mobile-collapsed-bar');
+      const arrow = document.getElementById('tl-toggle-arrow');
+      if (panel) panel.classList.remove('collapsed');
+      if (bar) bar.classList.remove('visible');
+      if (arrow) arrow.innerText = '▼';
     }
 
     // Switch presets
@@ -1210,6 +1657,8 @@
       const o = parseInt(document.getElementById('range-orange').value);
       const r = parseInt(document.getElementById('range-red').value);
       const config = {
+        user_id: targetUserId,
+        uid: targetUserId,
         preset: currentPreset,
         coordinates: userCoords,
         radii_km: {
@@ -1325,11 +1774,13 @@
     document.getElementById('range-orange').value = initialOrange;
     document.getElementById('range-red').value = initialRed;
     updateRadii();
+    selectMobileZone('yellow');
     updatePositions(userCoords);
 
     // Fetch saved settings from SkyShield Bot if available and not explicitly provided in URL
     if (!urlParams.has('lat')) {
-      fetch(`${API_BASE}/api/config`)
+      const configUrl = targetUserId ? `${API_BASE}/api/config?uid=${targetUserId}` : `${API_BASE}/api/config`;
+      fetch(configUrl)
         .then(res => res.json())
         .then(cfg => {
           if (cfg && cfg.coordinates) {
