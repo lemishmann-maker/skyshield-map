@@ -143,17 +143,23 @@
       font-weight: 600;
     }
 
-    /* Preset switcher */
+    /* Header action controls & presets */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .preset-selector {
       display: flex;
-      gap: 6px;
+      gap: 4px;
     }
 
     .preset-btn {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid var(--border-color);
       color: var(--text-muted);
-      padding: 6px 12px;
+      padding: 6px 11px;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
@@ -165,6 +171,107 @@
       background: var(--accent-primary);
       color: #fff;
       border-color: var(--accent-primary);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+
+    .header-action-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .header-action-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .header-action-btn.reset-btn {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    .header-action-btn.reset-btn:hover {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    .header-action-btn.fullscreen-btn {
+      font-size: 15px;
+    }
+
+    /* Reset Confirmation Modal */
+    .reset-modal-window {
+      max-width: 380px !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+    }
+
+    .reset-modal-body {
+      padding: 16px 20px 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 13.5px;
+      color: #e2e8f0;
+      line-height: 1.45;
+    }
+
+    .reset-modal-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.6);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .reset-modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .modal-btn-cancel {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .modal-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-btn-danger {
+      flex: 1;
+      padding: 10px;
+      background: #dc2626;
+      border: 1px solid #ef4444;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+      transition: all 0.2s;
+    }
+
+    .modal-btn-danger:hover {
+      background: #b91c1c;
     }
 
     
@@ -690,18 +797,43 @@
       color: #fff;
       border: none;
       border-radius: 10px;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .btn-save:hover {
       background: #2563eb;
+    }
+
+    .btn-save.btn-locked {
+      background: rgba(255, 255, 255, 0.08);
+      color: #94a3b8;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+    }
+
+    .btn-save.btn-locked:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #f1f5f9;
+    }
+
+    .btn-save.btn-unlocked {
+      background: #10b981;
+      border: 1px solid #34d399;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+      animation: pulse-save 2s infinite alternate;
+    }
+
+    @keyframes pulse-save {
+      from { transform: scale(1); box-shadow: 0 0 12px rgba(16, 185, 129, 0.3); }
+      to { transform: scale(1.015); box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
     }
 
     .btn-save.saved {
@@ -1032,14 +1164,15 @@
        ========================================================================== */
     @media (max-width: 768px) {
       .app-header {
-        width: calc(100% - 16px);
-        top: 8px;
-        padding: 8px 12px;
+        width: calc(100% - 12px);
+        top: 6px;
+        padding: 6px 10px;
         border-radius: 12px;
       }
 
       .brand-title {
-        font-size: 13.5px;
+        font-size: 13px;
+        gap: 4px;
       }
 
       .brand-badge {
@@ -1047,9 +1180,15 @@
       }
 
       .preset-btn {
-        padding: 5px 8px;
-        font-size: 11px;
+        padding: 5px 7px;
+        font-size: 10.5px;
         border-radius: 6px;
+      }
+
+      .header-action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12.5px;
       }
 
       .traffic-light-widget {
@@ -1124,9 +1263,14 @@
       🛡 SkyShield
       <span class="brand-badge">Фільтр реальних загроз</span>
     </div>
-    <div class="preset-selector">
-      <button class="preset-btn" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
-      <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
+    <div class="header-actions">
+      <div class="preset-selector">
+        <button class="preset-btn" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
+        <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
+      </div>
+      <button class="header-action-btn switch-btn" id="btn-switch-preset" onclick="togglePresetSwitch()" title="Перемкнути пресет (Дім / Робота)">🔄</button>
+      <button class="header-action-btn reset-btn" id="btn-reset-location" onclick="openResetModal()" title="Скинути точку для обраного пресету">🗑</button>
+      <button class="header-action-btn fullscreen-btn" id="btn-fullscreen" onclick="toggleFullscreen()" title="На весь екран">⛶</button>
     </div>
   </div>
 
@@ -1136,6 +1280,27 @@
     <div>
       <div class="save-toast-title">Позицію та радіуси успішно збережено!</div>
       <div id="save-toast-desc" class="save-toast-desc">Координати та зони безпеки зафіксовано</div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="reset-confirm-modal" class="modal-backdrop" onclick="handleResetBackdrop(event)">
+    <div class="modal-window reset-modal-window">
+      <div class="modal-header">
+        <div class="modal-title" style="color: #f87171;">
+          <span>🗑</span>
+          <span>Скинути локацію?</span>
+        </div>
+        <button class="modal-close" onclick="closeResetModal()">✕</button>
+      </div>
+      <div class="reset-modal-body">
+        <p id="reset-modal-desc">Ви дійсно бажаєте скинути збережену точку для пресету <b>«🏠 Дім»</b>?</p>
+        <div class="reset-modal-hint">ℹ️ Точку буде розблоковано для редагування. Ви зможете обрати нове місце на карті та зафіксувати його. Інший пресет залишиться без змін.</div>
+        <div class="reset-modal-actions">
+          <button class="modal-btn-cancel" onclick="closeResetModal()">Скасувати</button>
+          <button class="modal-btn-danger" onclick="confirmResetLocation()">Так, скинути</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1172,8 +1337,8 @@
       <span style="font-size: 14px;">🛡</span>
       <span id="mcb-text">🟡 7км • 🟠 15км • 🔴 30км</span>
     </div>
-    <button class="mcb-btn-save" onclick="event.stopPropagation(); saveSettings()">
-      💾 Зберегти
+    <button class="mcb-btn-save" id="mcb-btn-save" onclick="event.stopPropagation(); handleSaveButtonClick()">
+      💾 Зафіксувати
     </button>
   </div>
 
@@ -1256,10 +1421,10 @@
       <input type="range" id="range-red" min="20" max="50" value="30" oninput="updateRadii('red')">
     </div>
 
-    <button class="btn-save" onclick="saveSettings()">
-      💾 Зберегти позицію та радіуси
+    <button class="btn-save btn-locked" id="btn-save" onclick="handleSaveButtonClick()">
+      🔒 Локацію зафіксовано (зміна через 🗑)
     </button>
-    <div class="info-tag">💡 Натисніть у будь-яку точку карти або перетягніть маркер</div>
+    <div class="info-tag" id="lock-hint-text">💡 Щоб змінити точку на карті — натисніть червону кнопку 🗑 у шапці</div>
   </div>
 
   <!-- Threat Classification Info Modal -->
@@ -1475,6 +1640,8 @@
     });
 
     let homeMarker = L.marker(userCoords, { icon: radarIcon, draggable: true }).addTo(map);
+    homeMarker.dragging.disable();
+    let isLocationLocked = true;
 
     // Concentric Safety Circles: Yellow (Tactical), Orange (Standard UAV), Red (High Speed / KAB)
     let circleYellow = L.circle(userCoords, {
@@ -1577,12 +1744,17 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
 
     // Drag marker event
     homeMarker.on('dragend', function (e) {
+      if (isLocationLocked) return;
       const pos = e.target.getLatLng();
       updatePositions([pos.lat, pos.lng]);
     });
 
     // Click map event
     map.on('click', function(e) {
+      if (isLocationLocked) {
+        showLockToast();
+        return;
+      }
       updatePositions([e.latlng.lat, e.latlng.lng]);
     });
 
@@ -1667,6 +1839,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     }
 
     // Slider inputs
+    // Slider inputs & live circle updates
     function updateRadii(activeZone) {
       const y = parseInt(document.getElementById('range-yellow').value);
       const o = parseInt(document.getElementById('range-orange').value);
@@ -1706,12 +1879,275 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
 
       if (activeZone) {
         showTTXToast(activeZone);
+        triggerRadiiAutoSave();
       }
     }
 
-    // ==========================================================================
+    // Auto-save radii on the fly (debounce 350ms)
+    let radiiSaveDebounceTimer = null;
+    function triggerRadiiAutoSave() {
+      clearTimeout(radiiSaveDebounceTimer);
+      radiiSaveDebounceTimer = setTimeout(() => {
+        autoSaveRadii();
+      }, 350);
+    }
+
+    function autoSaveRadii() {
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+
+      if (presets && presets[currentPreset]) {
+        presets[currentPreset].yellow = y;
+        presets[currentPreset].orange = o;
+        presets[currentPreset].red = r;
+      }
+      try {
+        localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
+        localStorage.setItem(storageActiveKey, currentPreset);
+      } catch(e) {}
+
+      showSaveMiniToast();
+
+      const config = {
+        user_id: targetUserId,
+        uid: targetUserId,
+        preset: currentPreset,
+        coordinates: userCoords,
+        radii_km: { tactical_yellow: y, standard_orange: o, fast_red: r },
+        all_presets: presets
+      };
+
+      if (API_BASE) {
+        fetch(`${API_BASE}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        }).catch(() => {});
+      }
+    }
+
+    function showSaveMiniToast() {
+      const toast = document.getElementById('save-success-toast');
+      const titleEl = document.querySelector('.save-toast-title');
+      const descEl = document.getElementById('save-toast-desc');
+      if (titleEl) titleEl.innerText = '✓ Радіуси безпеки збережено';
+      if (descEl) {
+        const y = document.getElementById('val-yellow').innerText;
+        const o = document.getElementById('val-orange').innerText;
+        const r = document.getElementById('val-red').innerText;
+        descEl.innerText = `🟡 ${y} км • 🟠 ${o} км • 🔴 ${r} км`;
+      }
+      if (toast) {
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2000);
+      }
+    }
+
+    function showToastNotice(title, desc, durationMs = 3200) {
+      const toast = document.getElementById('save-success-toast');
+      const titleEl = document.querySelector('.save-toast-title');
+      const descEl = document.getElementById('save-toast-desc');
+      if (titleEl) titleEl.innerText = title;
+      if (descEl) descEl.innerText = desc || '';
+      if (toast) {
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), durationMs);
+      }
+    }
+
+    function showLockToast() {
+      const pLabel = currentPreset === 'work' ? '«Робота»' : '«Дім»';
+      showToastNotice(`🔒 Локація ${pLabel} зафіксована`, 'Щоб змінити точку — натисніть червону кнопку 🗑 у шапці');
+    }
+
+    // Reset location modal handlers
+    function openResetModal() {
+      const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
+      const desc = document.getElementById('reset-modal-desc');
+      if (desc) desc.innerHTML = `Ви дійсно бажаєте скинути збережену точку для пресету <b>${pLabel}</b>?`;
+      const modal = document.getElementById('reset-confirm-modal');
+      if (modal) modal.classList.add('open');
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('reset-confirm-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function handleResetBackdrop(e) {
+      if (e.target.id === 'reset-confirm-modal') {
+        closeResetModal();
+      }
+    }
+
+    function confirmResetLocation() {
+      closeResetModal();
+      isLocationLocked = false;
+      if (homeMarker && homeMarker.dragging) {
+        homeMarker.dragging.enable();
+      }
+      updateSaveButtonState();
+      const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
+      showToastNotice(`🗑 Локацію ${pLabel} розблоковано`, 'Оберіть нове місце на карті або перетягніть маркер, потім натисніть «Зафіксувати точку»');
+    }
+
+    function updateSaveButtonState() {
+      const btn = document.getElementById('btn-save');
+      const mcbBtn = document.getElementById('mcb-btn-save');
+      const hint = document.getElementById('lock-hint-text');
+      if (isLocationLocked) {
+        if (btn) {
+          btn.className = 'btn-save btn-locked';
+          btn.innerHTML = '🔒 Локацію зафіксовано (зміна через 🗑)';
+        }
+        if (mcbBtn) {
+          mcbBtn.innerHTML = '🔒 Зафіксовано';
+        }
+        if (hint) {
+          hint.innerHTML = '💡 Щоб змінити точку на карті — натисніть червону кнопку 🗑 у шапці';
+        }
+      } else {
+        if (btn) {
+          btn.className = 'btn-save btn-unlocked';
+          btn.innerHTML = '💾 Зафіксувати точку';
+        }
+        if (mcbBtn) {
+          mcbBtn.innerHTML = '💾 Зафіксувати';
+        }
+        if (hint) {
+          hint.innerHTML = '📍 Клікніть на потрібне місце на карті та натисніть «Зафіксувати точку»';
+        }
+      }
+    }
+
+    function handleSaveButtonClick() {
+      if (isLocationLocked) {
+        openResetModal();
+      } else {
+        confirmAndLockLocation();
+      }
+    }
+
+    function confirmAndLockLocation() {
+      isLocationLocked = true;
+      if (homeMarker && homeMarker.dragging) {
+        homeMarker.dragging.disable();
+      }
+      updateSaveButtonState();
+
+      if (presets && presets[currentPreset]) {
+        presets[currentPreset].coords = [userCoords[0], userCoords[1]];
+      }
+      try {
+        localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
+        localStorage.setItem(storageActiveKey, currentPreset);
+      } catch(e) {}
+
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+
+      const config = {
+        user_id: targetUserId,
+        uid: targetUserId,
+        preset: currentPreset,
+        coordinates: userCoords,
+        radii_km: { tactical_yellow: y, standard_orange: o, fast_red: r },
+        all_presets: presets
+      };
+
+      const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
+      showToastNotice(`✅ Точку ${pLabel} зафіксовано!`, `${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} • 🟠 ${o} • 🔴 ${r} км`, 3500);
+
+      // Save via API if available (PC / local)
+      if (API_BASE) {
+        fetch(`${API_BASE}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        }).catch(() => {});
+      }
+
+      // Sync via Telegram WebApp bridge
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          if (window.Telegram.WebApp.sendData) {
+            window.Telegram.WebApp.sendData(JSON.stringify(config));
+          }
+        } catch(e) {
+          console.warn('sendData error:', e);
+        }
+      }
+    }
+
+    // Toggle between Home and Work presets in map
+    function togglePresetSwitch() {
+      const next = currentPreset === 'home' ? 'work' : 'home';
+      selectPreset(next);
+    }
+
+    // Switch presets
+    function selectPreset(name) {
+      if (!presets[name]) return;
+
+      // Save previous preset UI state before switching
+      if (presets[currentPreset]) {
+        presets[currentPreset].yellow = parseInt(document.getElementById('range-yellow').value);
+        presets[currentPreset].orange = parseInt(document.getElementById('range-orange').value);
+        presets[currentPreset].red = parseInt(document.getElementById('range-red').value);
+      }
+
+      currentPreset = name;
+      isLocationLocked = true;
+      if (homeMarker && homeMarker.dragging) {
+        homeMarker.dragging.disable();
+      }
+      updateSaveButtonState();
+
+      try {
+        localStorage.setItem(storageActiveKey, currentPreset);
+        localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
+      } catch(e) {}
+
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(name === 'work' ? 'btn-preset-work' : 'btn-preset-home');
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const p = presets[name];
+      document.getElementById('range-yellow').value = p.yellow;
+      document.getElementById('range-orange').value = p.orange;
+      document.getElementById('range-red').value = p.red;
+      updateRadii('orange');
+      updatePositions(p.coords);
+      map.panTo(p.coords);
+
+      const pLabel = name === 'work' ? '💼 Робота' : '🏠 Дім';
+      showToastNotice(`📍 Перемкнуто на ${pLabel}`, 'ℹ️ На карті налаштовуються радіуси. Активний моніторинг перемикається в чаті бота.');
+    }
+
+    // Fullscreen toggle for desktop & Telegram WebApp
+    function toggleFullscreen() {
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          window.Telegram.WebApp.expand();
+          if (typeof window.Telegram.WebApp.requestFullscreen === 'function') {
+            window.Telegram.WebApp.requestFullscreen();
+          }
+        } catch (e) {}
+      }
+      if (!document.fullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(()=>{});
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(()=>{});
+        }
+      }
+    }
+
     // Mobile "Traffic Light" (Світлофор) Controller
-    // ==========================================================================
     let currentMobileZone = 'yellow';
     let isMobileCollapsed = false;
 
@@ -1772,149 +2208,6 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       if (arrow) arrow.innerText = '▼';
     }
 
-    // Switch presets
-    function selectPreset(name) {
-      if (!presets[name]) return;
-
-      // Save previous preset UI state before switching
-      if (presets[currentPreset]) {
-        presets[currentPreset].coords = [userCoords[0], userCoords[1]];
-        presets[currentPreset].yellow = parseInt(document.getElementById('range-yellow').value);
-        presets[currentPreset].orange = parseInt(document.getElementById('range-orange').value);
-        presets[currentPreset].red = parseInt(document.getElementById('range-red').value);
-      }
-
-      currentPreset = name;
-      try {
-        localStorage.setItem(storageActiveKey, currentPreset);
-      } catch(e) {}
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      const activeBtn = document.getElementById(name === 'work' ? 'btn-preset-work' : 'btn-preset-home');
-      if (activeBtn) activeBtn.classList.add('active');
-
-      const p = presets[name];
-      document.getElementById('range-yellow').value = p.yellow;
-      document.getElementById('range-orange').value = p.orange;
-      document.getElementById('range-red').value = p.red;
-      updateRadii('orange');
-      updatePositions(p.coords);
-      map.panTo(p.coords);
-
-      // Visual feedback prompt on switching
-      const pLabel = name === 'work' ? '💼 Робота' : '🏠 Дім';
-      const toast = document.getElementById('save-success-toast');
-      const descEl = document.getElementById('save-toast-desc');
-      const titleEl = document.querySelector('.save-toast-title');
-      if (titleEl) titleEl.innerText = `Перемкнуто на ${pLabel}!`;
-      if (descEl) descEl.innerText = 'Натисніть кнопку «💾 Зберегти», щоб зафіксувати для сповіщень.';
-      if (toast) {
-        toast.classList.add('visible');
-        setTimeout(() => toast.classList.remove('visible'), 3000);
-      }
-    }
-
-    // Save configuration
-    function saveSettings() {
-      const y = parseInt(document.getElementById('range-yellow').value);
-      const o = parseInt(document.getElementById('range-orange').value);
-      const r = parseInt(document.getElementById('range-red').value);
-
-      if (presets[currentPreset]) {
-        presets[currentPreset].coords = [userCoords[0], userCoords[1]];
-        presets[currentPreset].yellow = y;
-        presets[currentPreset].orange = o;
-        presets[currentPreset].red = r;
-      }
-
-      const config = {
-        user_id: targetUserId,
-        uid: targetUserId,
-        preset: currentPreset,
-        coordinates: userCoords,
-        radii_km: {
-          tactical_yellow: y,
-          standard_orange: o,
-          fast_red: r
-        },
-        all_presets: presets
-      };
-
-      // Store in namespaced localStorage
-      localStorage.setItem(storageConfigKey, JSON.stringify(config));
-      localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
-      localStorage.setItem(storageActiveKey, currentPreset);
-
-      // Visual feedback on save button
-      const btn = document.querySelector('.btn-save');
-      const origText = btn.innerHTML;
-      btn.classList.add('saved');
-      btn.innerHTML = '✅ Збережено успішно!';
-
-      // Show prominent on-screen toast
-      const toast = document.getElementById('save-success-toast');
-      const descEl = document.getElementById('save-toast-desc');
-      const titleEl = document.querySelector('.save-toast-title');
-      const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
-      if (titleEl) titleEl.innerText = 'Позицію та радіуси успішно збережено!';
-      if (descEl) {
-        descEl.innerText = `${pLabel}: ${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} км, 🟠 ${o} км, 🔴 ${r} км`;
-      }
-      if (toast) {
-        toast.classList.add('visible');
-      }
-
-      setTimeout(() => {
-        btn.classList.remove('saved');
-        btn.innerHTML = origText;
-      }, 3500);
-
-      setTimeout(() => {
-        if (toast) toast.classList.remove('visible');
-      }, 4500);
-
-      // Send to Cloud Bot API
-      if (API_BASE) {
-        fetch(`${API_BASE}/api/save`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config)
-        }).then(r => r.json()).then(res => {
-          console.log('Successfully synced with SkyShield Bot:', res);
-        }).catch(err => {
-          console.log('Bot API sync error:', err);
-        });
-      }
-
-      // Send directly via Telegram WebApp bridge
-      let sentViaBridge = false;
-      if (window.Telegram && window.Telegram.WebApp) {
-        try {
-          if (window.Telegram.WebApp.sendData) {
-            window.Telegram.WebApp.sendData(JSON.stringify(config));
-            sentViaBridge = true;
-            setTimeout(() => {
-              window.Telegram.WebApp.close();
-            }, 800);
-          }
-        } catch(e) {
-          console.warn('Telegram WebApp sendData error (likely opened from inline keyboard):', e);
-          sentViaBridge = false;
-        }
-
-        // If sendData is not permitted (e.g. opened from inline keyboard), fallback to deep link!
-        if (!sentViaBridge && window.Telegram.WebApp.openTelegramLink) {
-          try {
-            const latInt = Math.round(userCoords[0] * 10000);
-            const lonInt = Math.round(userCoords[1] * 10000);
-            const deepParam = `sl_${currentPreset}_${latInt}_${lonInt}_${y}_${o}_${r}`;
-            window.Telegram.WebApp.openTelegramLink(`https://t.me/SkyShield_KH_bot?start=${deepParam}`);
-          } catch(err) {
-            console.error('Deep link fallback error:', err);
-          }
-        }
-      }
-    }
-
     // Information Modal Dialog Logic
     function openInfoModal(targetCategory) {
       const modal = document.getElementById('info-modal');
@@ -1969,6 +2262,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     updateRadii();
     selectMobileZone('yellow');
     updatePositions(userCoords);
+    updateSaveButtonState();
 
     // Sync button highlight with currentPreset
     document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
@@ -2020,6 +2314,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
           document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
           const cloudBtn = document.getElementById(currentPreset === 'work' ? 'btn-preset-work' : 'btn-preset-home');
           if (cloudBtn) cloudBtn.classList.add('active');
+          updateSaveButtonState();
         })
         .catch(() => {});
     }
@@ -2029,6 +2324,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       try {
         window.Telegram.WebApp.ready();
         window.Telegram.WebApp.expand();
+        if (typeof window.Telegram.WebApp.requestFullscreen === 'function') {
+          window.Telegram.WebApp.requestFullscreen();
+        }
         if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
           window.Telegram.WebApp.disableVerticalSwipes();
         }
