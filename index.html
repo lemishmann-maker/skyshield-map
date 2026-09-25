@@ -885,6 +885,96 @@
       color: #94a3b8;
     }
 
+    /* Preset Info Toast (Informational card matching TTX styling) */
+    .preset-info-toast {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      width: calc(100% - 24px);
+      max-width: 530px;
+      background: linear-gradient(135deg, #09121f 0%, #172554 100%);
+      border: 1.5px solid #3b82f6;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(59, 130, 246, 0.35);
+      border-radius: 14px;
+      padding: 12px 16px;
+      z-index: 3000;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .preset-info-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .preset-info-icon {
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .preset-info-content {
+      flex-grow: 1;
+      min-width: 0;
+    }
+
+    .preset-info-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .preset-info-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 5px;
+      color: #93c5fd;
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .preset-info-desc {
+      font-size: 12px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+
+    .preset-info-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .preset-info-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #fff;
+    }
+
     /* Radar Pulse Marker */
     .radar-pin {
       position: relative;
@@ -1252,6 +1342,39 @@
         font-size: 10px;
         margin-top: 5px;
       }
+
+      .preset-info-toast {
+        top: 52px;
+        width: calc(100% - 16px);
+        padding: 10px 12px;
+        gap: 10px;
+        border-radius: 12px;
+      }
+
+      .preset-info-icon {
+        font-size: 18px;
+      }
+
+      .preset-info-title {
+        font-size: 12px;
+        gap: 4px;
+      }
+
+      .preset-info-badge {
+        font-size: 10px;
+        padding: 1px 5px;
+      }
+
+      .preset-info-desc {
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .preset-info-close {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+      }
     }
   </style>
 </head>
@@ -1268,19 +1391,33 @@
         <button class="preset-btn" id="btn-preset-home" onclick="selectPreset('home')">🏠 Дім</button>
         <button class="preset-btn" id="btn-preset-work" onclick="selectPreset('work')">💼 Робота</button>
       </div>
-      <button class="header-action-btn switch-btn" id="btn-switch-preset" onclick="togglePresetSwitch()" title="Перемкнути пресет (Дім / Робота)">🔄</button>
       <button class="header-action-btn reset-btn" id="btn-reset-location" onclick="openResetModal()" title="Скинути точку для обраного пресету">🗑</button>
       <button class="header-action-btn fullscreen-btn" id="btn-fullscreen" onclick="toggleFullscreen()" title="На весь екран">⛶</button>
     </div>
   </div>
 
-  <!-- Save Success Toast Notification -->
+  <!-- Save Success Toast Notification (Radii / Pin saved) -->
   <div id="save-success-toast" class="save-toast">
     <div class="save-toast-icon">✅</div>
     <div>
       <div class="save-toast-title">Позицію та радіуси успішно збережено!</div>
       <div id="save-toast-desc" class="save-toast-desc">Координати та зони безпеки зафіксовано</div>
     </div>
+  </div>
+
+  <!-- Preset Switch Info Toast (Informational card matching TTX styling) -->
+  <div id="preset-info-toast" class="preset-info-toast" onmouseenter="pausePresetInfoTimer()" onmouseleave="resumePresetInfoTimer()">
+    <div class="preset-info-icon" id="preset-info-icon">📍</div>
+    <div class="preset-info-content">
+      <div class="preset-info-title">
+        <span id="preset-info-title-text">Налаштування пресету: 💼 Робота</span>
+        <span class="preset-info-badge">Тільки радіуси</span>
+      </div>
+      <div id="preset-info-desc" class="preset-info-desc">
+        При перемиканні пресетів <b>Робота / Дім</b> тут, ви налаштовуєте лише радіуси безпеки! Обрати активний пресет Робота чи Дім для моніторингу можна тільки в меню бота.
+      </div>
+    </div>
+    <button class="preset-info-close" onclick="hidePresetInfoToast()" title="Закрити">✕</button>
   </div>
 
   <!-- Reset Confirmation Modal -->
@@ -2081,10 +2218,47 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }
     }
 
-    // Toggle between Home and Work presets in map
-    function togglePresetSwitch() {
-      const next = currentPreset === 'home' ? 'work' : 'home';
-      selectPreset(next);
+    // Preset Info Toast Controller (Informational card matching TTX styling)
+    let presetInfoTimer = null;
+    const PRESET_INFO_READ_TIME_MS = 14000; // 14 seconds to comfortably read
+
+    function showPresetInfoToast(name) {
+      const toast = document.getElementById('preset-info-toast');
+      if (!toast) return;
+
+      const pLabel = name === 'work' ? '💼 Робота' : '🏠 Дім';
+      const iconEl = document.getElementById('preset-info-icon');
+      const titleEl = document.getElementById('preset-info-title-text');
+      const descEl = document.getElementById('preset-info-desc');
+
+      if (iconEl) iconEl.innerText = name === 'work' ? '💼' : '🏠';
+      if (titleEl) titleEl.innerText = `Налаштування пресету: ${pLabel}`;
+      if (descEl) {
+        descEl.innerHTML = `При перемиканні пресетів <b>Робота / Дім</b> тут, ви налаштовуєте лише радіуси безпеки! Обрати активний пресет Робота чи Дім для моніторингу можна тільки в меню бота.`;
+      }
+
+      toast.classList.add('visible');
+      clearTimeout(presetInfoTimer);
+      presetInfoTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, PRESET_INFO_READ_TIME_MS);
+    }
+
+    function hidePresetInfoToast() {
+      const toast = document.getElementById('preset-info-toast');
+      if (toast) toast.classList.remove('visible');
+      clearTimeout(presetInfoTimer);
+    }
+
+    function pausePresetInfoTimer() {
+      clearTimeout(presetInfoTimer);
+    }
+
+    function resumePresetInfoTimer() {
+      clearTimeout(presetInfoTimer);
+      presetInfoTimer = setTimeout(() => {
+        hidePresetInfoToast();
+      }, 5000);
     }
 
     // Switch presets
@@ -2118,12 +2292,14 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       document.getElementById('range-yellow').value = p.yellow;
       document.getElementById('range-orange').value = p.orange;
       document.getElementById('range-red').value = p.red;
-      updateRadii('orange');
+      
+      // Update circle radii and UI without triggering auto-save or TTX toast
+      updateRadii(null);
       updatePositions(p.coords);
       map.panTo(p.coords);
 
-      const pLabel = name === 'work' ? '💼 Робота' : '🏠 Дім';
-      showToastNotice(`📍 Перемкнуто на ${pLabel}`, 'ℹ️ На карті налаштовуються радіуси. Активний моніторинг перемикається в чаті бота.');
+      // Show informational toast matching TTX cards
+      showPresetInfoToast(name);
     }
 
     // Fullscreen toggle for desktop & Telegram WebApp
