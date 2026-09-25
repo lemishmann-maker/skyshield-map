@@ -1361,27 +1361,8 @@
   <script>
     // SkyShield Cloud API Base
     const API_BASE = (window.location.origin.includes('github.io') || window.location.origin.includes('netlify.app'))
-      ? 'https://skyshield-bot.onrender.com'
+      ? ''
       : (window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8080');
-
-    // Initial presets and state
-    let presets = {
-      home: { coords: [50.0597, 36.2120], yellow: 7, orange: 15, red: 33 },
-      work: { coords: [49.9935, 36.2304], yellow: 5, orange: 12, red: 25 }
-    };
-    let currentPreset = 'home';
-
-    // 1. First restore from localStorage (instant cache)
-    try {
-      const savedActive = localStorage.getItem('skyshield_active_preset');
-      if (savedActive && (savedActive === 'work' || savedActive === 'home')) {
-        currentPreset = savedActive;
-      }
-      const savedPresets = JSON.parse(localStorage.getItem('skyshield_presets'));
-      if (savedPresets && savedPresets.home && savedPresets.work) {
-        presets = savedPresets;
-      }
-    } catch (e) {}
 
     const urlParams = new URLSearchParams(window.location.search);
     let targetUserId = null;
@@ -1391,7 +1372,35 @@
       targetUserId = window.Telegram.WebApp.initDataUnsafe.user.id;
     }
 
-    // 2. Read explicit preset parameters from URL
+    const userStoragePrefix = targetUserId ? `u${targetUserId}_` : '';
+    const storagePresetsKey = `skyshield_${userStoragePrefix}presets`;
+    const storageActiveKey = `skyshield_${userStoragePrefix}active_preset`;
+    const storageConfigKey = `skyshield_${userStoragePrefix}user_config`;
+
+    // Detect default region from coordinates in URL if present
+    const isDniproUrl = (urlParams.has('lat') && parseFloat(urlParams.get('lat')) < 49.3) ||
+                         (urlParams.has('h_lat') && parseFloat(urlParams.get('h_lat')) < 49.3);
+
+    // Initial presets and state
+    let presets = {
+      home: { coords: isDniproUrl ? [48.6325, 35.2255] : [50.0597, 36.2120], yellow: 7, orange: 15, red: 33 },
+      work: { coords: isDniproUrl ? [48.4647, 35.0462] : [49.9935, 36.2304], yellow: 5, orange: 12, red: 25 }
+    };
+    let currentPreset = 'home';
+
+    // 1. First restore from namespaced localStorage (instant cache)
+    try {
+      const savedActive = localStorage.getItem(storageActiveKey);
+      if (savedActive && (savedActive === 'work' || savedActive === 'home')) {
+        currentPreset = savedActive;
+      }
+      const savedPresets = JSON.parse(localStorage.getItem(storagePresetsKey));
+      if (savedPresets && savedPresets.home && savedPresets.work) {
+        presets = savedPresets;
+      }
+    } catch (e) {}
+
+    // 2. Read explicit preset parameters from URL (Authoritative DB truth from bot)
     if (urlParams.has('h_lat') && urlParams.has('h_lon')) {
       presets.home.coords = [parseFloat(urlParams.get('h_lat')), parseFloat(urlParams.get('h_lon'))];
       if (urlParams.has('h_y')) presets.home.yellow = parseInt(urlParams.get('h_y'));
@@ -1405,13 +1414,19 @@
       if (urlParams.has('w_r')) presets.work.red = parseInt(urlParams.get('w_r'));
     }
 
-    // 3. Preset parameter from URL
+    // 3. Preset parameter from URL - HIGHEST PRIORITY (Direct user DB setting)
     if (urlParams.has('preset')) {
       const p = urlParams.get('preset').toLowerCase();
       if (p === 'work' || p === 'home') {
         currentPreset = p;
       }
     }
+
+    // Persist verified presets and active preset to namespaced localStorage
+    try {
+      localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
+      localStorage.setItem(storageActiveKey, currentPreset);
+    } catch(e) {}
 
     let userCoords = presets[currentPreset].coords;
     let initialYellow = presets[currentPreset].yellow;
@@ -1770,6 +1785,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }
 
       currentPreset = name;
+      try {
+        localStorage.setItem(storageActiveKey, currentPreset);
+      } catch(e) {}
       document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(name === 'work' ? 'btn-preset-work' : 'btn-preset-home');
       if (activeBtn) activeBtn.classList.add('active');
@@ -1781,6 +1799,18 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       updateRadii('orange');
       updatePositions(p.coords);
       map.panTo(p.coords);
+
+      // Visual feedback prompt on switching
+      const pLabel = name === 'work' ? '💼 Робота' : '🏠 Дім';
+      const toast = document.getElementById('save-success-toast');
+      const descEl = document.getElementById('save-toast-desc');
+      const titleEl = document.querySelector('.save-toast-title');
+      if (titleEl) titleEl.innerText = `Перемкнуто на ${pLabel}!`;
+      if (descEl) descEl.innerText = 'Натисніть кнопку «💾 Зберегти», щоб зафіксувати для сповіщень.';
+      if (toast) {
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 3000);
+      }
     }
 
     // Save configuration
@@ -1809,10 +1839,10 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         all_presets: presets
       };
 
-      // Store in localStorage
-      localStorage.setItem('skyshield_user_config', JSON.stringify(config));
-      localStorage.setItem('skyshield_presets', JSON.stringify(presets));
-      localStorage.setItem('skyshield_active_preset', currentPreset);
+      // Store in namespaced localStorage
+      localStorage.setItem(storageConfigKey, JSON.stringify(config));
+      localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
+      localStorage.setItem(storageActiveKey, currentPreset);
 
       // Visual feedback on save button
       const btn = document.querySelector('.btn-save');
@@ -1823,7 +1853,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       // Show prominent on-screen toast
       const toast = document.getElementById('save-success-toast');
       const descEl = document.getElementById('save-toast-desc');
+      const titleEl = document.querySelector('.save-toast-title');
       const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
+      if (titleEl) titleEl.innerText = 'Позицію та радіуси успішно збережено!';
       if (descEl) {
         descEl.innerText = `${pLabel}: ${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} км, 🟠 ${o} км, 🔴 ${r} км`;
       }
@@ -1841,27 +1873,44 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }, 4500);
 
       // Send to Cloud Bot API
-      fetch(`${API_BASE}/api/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
-      }).then(r => r.json()).then(res => {
-        console.log('Successfully synced with SkyShield Bot:', res);
-      }).catch(err => {
-        console.log('Bot API sync error:', err);
-      });
+      if (API_BASE) {
+        fetch(`${API_BASE}/api/save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        }).then(r => r.json()).then(res => {
+          console.log('Successfully synced with SkyShield Bot:', res);
+        }).catch(err => {
+          console.log('Bot API sync error:', err);
+        });
+      }
 
       // Send directly via Telegram WebApp bridge
+      let sentViaBridge = false;
       if (window.Telegram && window.Telegram.WebApp) {
         try {
           if (window.Telegram.WebApp.sendData) {
             window.Telegram.WebApp.sendData(JSON.stringify(config));
+            sentViaBridge = true;
+            setTimeout(() => {
+              window.Telegram.WebApp.close();
+            }, 800);
           }
-          setTimeout(() => {
-            window.Telegram.WebApp.close();
-          }, 800);
         } catch(e) {
-          console.log('Telegram WebApp error:', e);
+          console.warn('Telegram WebApp sendData error (likely opened from inline keyboard):', e);
+          sentViaBridge = false;
+        }
+
+        // If sendData is not permitted (e.g. opened from inline keyboard), fallback to deep link!
+        if (!sentViaBridge && window.Telegram.WebApp.openTelegramLink) {
+          try {
+            const latInt = Math.round(userCoords[0] * 10000);
+            const lonInt = Math.round(userCoords[1] * 10000);
+            const deepParam = `sl_${currentPreset}_${latInt}_${lonInt}_${y}_${o}_${r}`;
+            window.Telegram.WebApp.openTelegramLink(`https://t.me/SkyShield_KH_bot?start=${deepParam}`);
+          } catch(err) {
+            console.error('Deep link fallback error:', err);
+          }
         }
       }
     }
@@ -1927,51 +1976,53 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     if (initBtn) initBtn.classList.add('active');
 
     // Fetch full configuration & presets from SkyShield Cloud API
-    const configUrl = targetUserId ? `${API_BASE}/api/config?uid=${targetUserId}` : `${API_BASE}/api/config`;
-    fetch(configUrl)
-      .then(res => res.json())
-      .then(cfg => {
-        if (!cfg) return;
-        if (cfg.presets) {
-          if (cfg.presets.home && cfg.presets.home.coordinates) {
-            presets.home = {
-              coords: [cfg.presets.home.coordinates[0], cfg.presets.home.coordinates[1]],
-              yellow: cfg.presets.home.yellow || 7,
-              orange: cfg.presets.home.orange || 15,
-              red: cfg.presets.home.red || 33
-            };
+    if (API_BASE) {
+      const configUrl = targetUserId ? `${API_BASE}/api/config?uid=${targetUserId}` : `${API_BASE}/api/config`;
+      fetch(configUrl)
+        .then(res => res.json())
+        .then(cfg => {
+          if (!cfg) return;
+          if (cfg.presets) {
+            if (cfg.presets.home && cfg.presets.home.coordinates) {
+              presets.home = {
+                coords: [cfg.presets.home.coordinates[0], cfg.presets.home.coordinates[1]],
+                yellow: cfg.presets.home.yellow || 7,
+                orange: cfg.presets.home.orange || 15,
+                red: cfg.presets.home.red || 33
+              };
+            }
+            if (cfg.presets.work && cfg.presets.work.coordinates) {
+              presets.work = {
+                coords: [cfg.presets.work.coordinates[0], cfg.presets.work.coordinates[1]],
+                yellow: cfg.presets.work.yellow || 5,
+                orange: cfg.presets.work.orange || 12,
+                red: cfg.presets.work.red || 25
+              };
+            }
           }
-          if (cfg.presets.work && cfg.presets.work.coordinates) {
-            presets.work = {
-              coords: [cfg.presets.work.coordinates[0], cfg.presets.work.coordinates[1]],
-              yellow: cfg.presets.work.yellow || 5,
-              orange: cfg.presets.work.orange || 12,
-              red: cfg.presets.work.red || 25
-            };
+          if (!urlParams.has('preset') && cfg.preset && (cfg.preset === 'home' || cfg.preset === 'work')) {
+            currentPreset = cfg.preset;
+            try {
+              localStorage.setItem(storageActiveKey, currentPreset);
+            } catch(e) {}
           }
-        }
-        if (cfg.preset && (cfg.preset === 'home' || cfg.preset === 'work')) {
-          currentPreset = cfg.preset;
-          try {
-            localStorage.setItem('skyshield_active_preset', currentPreset);
-          } catch(e) {}
-        }
 
-        const activeP = presets[currentPreset];
-        if (activeP) {
-          updatePositions(activeP.coords);
-          document.getElementById('range-yellow').value = activeP.yellow;
-          document.getElementById('range-orange').value = activeP.orange;
-          document.getElementById('range-red').value = activeP.red;
-          updateRadii();
-          map.setView(activeP.coords, 12);
-        }
+          const activeP = presets[currentPreset];
+          if (activeP) {
+            updatePositions(activeP.coords);
+            document.getElementById('range-yellow').value = activeP.yellow;
+            document.getElementById('range-orange').value = activeP.orange;
+            document.getElementById('range-red').value = activeP.red;
+            updateRadii();
+            map.setView(activeP.coords, 12);
+          }
 
-        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-        const cloudBtn = document.getElementById(currentPreset === 'work' ? 'btn-preset-work' : 'btn-preset-home');
-        if (cloudBtn) cloudBtn.classList.add('active');
-      })
-      .catch(() => {});
+          document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+          const cloudBtn = document.getElementById(currentPreset === 'work' ? 'btn-preset-work' : 'btn-preset-home');
+          if (cloudBtn) cloudBtn.classList.add('active');
+        })
+        .catch(() => {});
+    }
 
     // Configure Telegram WebApp and lock down swipe-to-close gestures
     if (window.Telegram && window.Telegram.WebApp) {
