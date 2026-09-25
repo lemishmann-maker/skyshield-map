@@ -12,15 +12,25 @@
     function adjustSafeAreaInsets() {
       try {
         const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (!isMobile) return;
+        if (!isMobile) {
+          const header = document.querySelector('.app-header');
+          if (header) header.style.top = '';
+          const leafletRight = document.querySelector('.leaflet-top.leaflet-right');
+          if (leafletRight) leafletRight.style.top = '';
+          const presetToast = document.querySelector('.preset-info-toast');
+          if (presetToast) presetToast.style.top = '';
+          const saveToast = document.querySelector('.save-toast');
+          if (saveToast) saveToast.style.top = '';
+          return;
+        }
         
-        let topInset = 70;
+        let topInset = 108;
         if (window.Telegram && window.Telegram.WebApp) {
           const tg = window.Telegram.WebApp;
           if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
-            topInset = Math.max(topInset, tg.contentSafeAreaInset.top + 8);
+            topInset = Math.max(topInset, tg.contentSafeAreaInset.top + 10);
           } else if (tg.safeAreaInset && tg.safeAreaInset.top > 0) {
-            topInset = Math.max(topInset, tg.safeAreaInset.top + 22);
+            topInset = Math.max(topInset, tg.safeAreaInset.top + 54);
           }
         }
         
@@ -30,7 +40,15 @@
         }
         const leafletRight = document.querySelector('.leaflet-top.leaflet-right');
         if (leafletRight) {
-          leafletRight.style.top = (topInset + 58) + 'px';
+          leafletRight.style.top = (topInset + 54) + 'px';
+        }
+        const presetToast = document.querySelector('.preset-info-toast');
+        if (presetToast) {
+          presetToast.style.top = (topInset + 52) + 'px';
+        }
+        const saveToast = document.querySelector('.save-toast');
+        if (saveToast) {
+          saveToast.style.top = (topInset + 52) + 'px';
         }
       } catch (e) {}
     }
@@ -1286,14 +1304,14 @@
     @media (max-width: 768px) {
       .app-header {
         width: calc(100% - 12px);
-        top: calc(max(68px, env(safe-area-inset-top, 0px) + 20px, var(--tg-content-safe-area-inset-top, 0px) + 10px));
+        top: calc(max(108px, env(safe-area-inset-top, 0px) + 54px, var(--tg-content-safe-area-inset-top, 0px) + 10px));
         padding: 6px 10px;
         border-radius: 12px;
         transition: top 0.2s ease;
       }
 
       .leaflet-top.leaflet-right {
-        top: calc(max(126px, env(safe-area-inset-top, 0px) + 78px, var(--tg-content-safe-area-inset-top, 0px) + 68px));
+        top: calc(max(162px, env(safe-area-inset-top, 0px) + 108px, var(--tg-content-safe-area-inset-top, 0px) + 64px));
       }
 
       .brand-title {
@@ -1380,11 +1398,15 @@
       }
 
       .preset-info-toast {
-        top: 52px;
+        top: calc(max(160px, env(safe-area-inset-top, 0px) + 106px));
         width: calc(100% - 16px);
         padding: 10px 12px;
         gap: 10px;
         border-radius: 12px;
+      }
+
+      .save-toast {
+        top: calc(max(160px, env(safe-area-inset-top, 0px) + 106px));
       }
 
       .preset-info-icon {
