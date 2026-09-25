@@ -9,6 +9,32 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
+    function adjustSafeAreaInsets() {
+      try {
+        const isMobile = window.innerWidth <= 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (!isMobile) return;
+        
+        let topInset = 70;
+        if (window.Telegram && window.Telegram.WebApp) {
+          const tg = window.Telegram.WebApp;
+          if (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top > 0) {
+            topInset = Math.max(topInset, tg.contentSafeAreaInset.top + 8);
+          } else if (tg.safeAreaInset && tg.safeAreaInset.top > 0) {
+            topInset = Math.max(topInset, tg.safeAreaInset.top + 22);
+          }
+        }
+        
+        const header = document.querySelector('.app-header');
+        if (header) {
+          header.style.top = topInset + 'px';
+        }
+        const leafletRight = document.querySelector('.leaflet-top.leaflet-right');
+        if (leafletRight) {
+          leafletRight.style.top = (topInset + 58) + 'px';
+        }
+      } catch (e) {}
+    }
+
     if (window.Telegram && window.Telegram.WebApp) {
       try {
         window.Telegram.WebApp.ready();
@@ -16,8 +42,13 @@
         if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
           window.Telegram.WebApp.disableVerticalSwipes();
         }
+        window.Telegram.WebApp.onEvent('viewportChanged', adjustSafeAreaInsets);
+        window.Telegram.WebApp.onEvent('safeAreaChanged', adjustSafeAreaInsets);
       } catch (e) {}
     }
+
+    document.addEventListener('DOMContentLoaded', adjustSafeAreaInsets);
+    window.addEventListener('resize', adjustSafeAreaInsets);
   </script>
   
   <style>
@@ -1255,9 +1286,14 @@
     @media (max-width: 768px) {
       .app-header {
         width: calc(100% - 12px);
-        top: 6px;
+        top: calc(max(68px, env(safe-area-inset-top, 0px) + 20px, var(--tg-content-safe-area-inset-top, 0px) + 10px));
         padding: 6px 10px;
         border-radius: 12px;
+        transition: top 0.2s ease;
+      }
+
+      .leaflet-top.leaflet-right {
+        top: calc(max(126px, env(safe-area-inset-top, 0px) + 78px, var(--tg-content-safe-area-inset-top, 0px) + 68px));
       }
 
       .brand-title {
