@@ -1739,13 +1739,11 @@
   
   <script>
     // SkyShield Cloud API Base
+    const API_BASE = (window.location.origin.includes('github.io') || window.location.origin.includes('netlify.app'))
+      ? ''
+      : (window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8080');
+
     const urlParams = new URLSearchParams(window.location.search);
-    const paramApiBase = urlParams.get('api_base') ? urlParams.get('api_base').replace(/\/+$/, '') : '';
-    const API_BASE = paramApiBase || (
-      (window.location.origin.includes('github.io') || window.location.origin.includes('netlify.app'))
-        ? ''
-        : (window.location.origin.startsWith('http') ? window.location.origin : 'http://127.0.0.1:8080')
-    );
     let targetUserId = null;
     if (urlParams.has('uid')) {
       targetUserId = parseInt(urlParams.get('uid')) || null;
@@ -2130,6 +2128,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       if (activeZone) {
         hasUnsavedChanges = true;
         updateSaveButtonState();
+        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+          try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(e) {}
+        }
         showTTXToast(activeZone);
         triggerRadiiAutoSave();
       }
@@ -2192,7 +2193,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }
       if (toast) {
         toast.classList.add('visible');
-        setTimeout(() => toast.classList.remove('visible'), 2800);
+        setTimeout(() => toast.classList.remove('visible'), 2200);
       }
     }
 
@@ -2241,11 +2242,12 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         homeMarker.dragging.enable();
       }
       updateSaveButtonState();
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+        try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(e) {}
+      }
       const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
       showToastNotice(`🗑 Локацію ${pLabel} розблоковано`, 'Оберіть нове місце на карті або перетягніть маркер, потім натисніть «Зафіксувати точку»');
     }
-
-    let hasUnsavedChanges = false;
 
     function updateSaveButtonState() {
       const btn = document.getElementById('btn-save');
@@ -2253,15 +2255,8 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const hint = document.getElementById('lock-hint-text');
       const tgMb = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.MainButton) ? window.Telegram.WebApp.MainButton : null;
 
-      // Always hide native bottom MainButton across all platforms (mobile and PC)
-      if (tgMb) {
-        try {
-          tgMb.hide();
-        } catch(e) {}
-      }
-
       if (!isLocationLocked) {
-        // Location is unlocked: user can pick new point
+        // State 1: Location unlocked (marker draggable)
         if (btn) {
           btn.className = 'btn-save btn-unlocked';
           btn.innerHTML = '💾 Зафіксувати точку та зберегти';
@@ -2273,8 +2268,15 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         if (hint) {
           hint.innerHTML = '📍 Клікніть на потрібне місце на карті або перетягніть маркер, потім натисніть «Зафіксувати точку та зберегти»';
         }
+        if (tgMb) {
+          tgMb.setText('💾 ЗАФІКСУВАТИ ТОЧКУ ТА ЗБЕРЕГТИ');
+          tgMb.color = '#10b981';
+          tgMb.textColor = '#ffffff';
+          tgMb.show();
+          tgMb.enable();
+        }
       } else if (hasUnsavedChanges) {
-        // Location is locked, but radii or preset were modified
+        // State 2: Location locked, BUT radii or preset modified
         if (btn) {
           btn.className = 'btn-save btn-unlocked';
           btn.innerHTML = '💾 Зберегти нові радіуси безпеки';
@@ -2284,10 +2286,17 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
           mcbBtn.innerHTML = '💾 Зберегти';
         }
         if (hint) {
-          hint.innerHTML = '💡 Ви змінили радіуси. Натисніть «Зберегти нові радіуси безпеки»';
+          hint.innerHTML = '💡 Ви змінили радіуси зон. Натисніть «Зберегти нові радіуси безпеки»';
+        }
+        if (tgMb) {
+          tgMb.setText('💾 ЗБЕРЕГТИ РАДІУСИ БЕЗПЕКИ');
+          tgMb.color = '#10b981';
+          tgMb.textColor = '#ffffff';
+          tgMb.show();
+          tgMb.enable();
         }
       } else {
-        // Location is locked (normal state, radii auto-saved)
+        // State 3: Everything saved and locked
         if (btn) {
           btn.className = 'btn-save btn-locked';
           btn.innerHTML = '🔒 Локацію зафіксовано (зміна через 🗑)';
@@ -2299,18 +2308,21 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         if (hint) {
           hint.innerHTML = '💡 Щоб змінити точку на карті — натисніть червону кнопку 🗑 у шапці';
         }
+        if (tgMb) {
+          tgMb.hide();
+        }
       }
     }
 
     function handleSaveButtonClick() {
-      if (!isLocationLocked || hasUnsavedChanges) {
-        confirmAndLockLocation();
+      if (hasUnsavedChanges || !isLocationLocked) {
+        confirmAndSaveLocation();
       } else {
         openResetModal();
       }
     }
 
-    function confirmAndLockLocation() {
+    function confirmAndSaveLocation() {
       isLocationLocked = true;
       hasUnsavedChanges = false;
       if (homeMarker && homeMarker.dragging) {
@@ -2318,17 +2330,26 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }
       updateSaveButtonState();
 
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.disableClosingConfirmation === 'function') {
+        try {
+          window.Telegram.WebApp.disableClosingConfirmation();
+        } catch(e) {}
+      }
+
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+
       if (presets && presets[currentPreset]) {
         presets[currentPreset].coords = [userCoords[0], userCoords[1]];
+        presets[currentPreset].yellow = y;
+        presets[currentPreset].orange = o;
+        presets[currentPreset].red = r;
       }
       try {
         localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
         localStorage.setItem(storageActiveKey, currentPreset);
       } catch(e) {}
-
-      const y = parseInt(document.getElementById('range-yellow').value);
-      const o = parseInt(document.getElementById('range-orange').value);
-      const r = parseInt(document.getElementById('range-red').value);
 
       const config = {
         user_id: targetUserId,
@@ -2340,24 +2361,29 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       };
 
       const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
-      showToastNotice(`✅ Параметри для ${pLabel} збережено!`, `${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} • 🟠 ${o} • 🔴 ${r} км`, 3500);
+      showToastNotice(`✅ Налаштування ${pLabel} збережено!`, `${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} • 🟠 ${o} • 🔴 ${r} км`, 3500);
 
-      // Save via API
+      // Save via API if available (PC / local)
       if (API_BASE) {
         fetch(`${API_BASE}/api/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config)
         }).catch(() => {});
-      } else if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.sendData) {
-        // Fallback for static hosting when API tunnel is not reachable
+      }
+
+      // Sync via Telegram WebApp bridge
+      if (window.Telegram && window.Telegram.WebApp) {
         try {
-          window.Telegram.WebApp.sendData(JSON.stringify(config));
+          if (window.Telegram.WebApp.sendData) {
+            window.Telegram.WebApp.sendData(JSON.stringify(config));
+          }
         } catch(e) {
           console.warn('sendData error:', e);
         }
       }
     }
+    const confirmAndLockLocation = confirmAndSaveLocation;
 
     // Preset Info Toast Controller (Informational card matching TTX styling)
     let presetInfoTimer = null;
@@ -2415,7 +2441,6 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
 
       currentPreset = name;
       isLocationLocked = true;
-      hasUnsavedChanges = true;
       if (homeMarker && homeMarker.dragging) {
         homeMarker.dragging.disable();
       }
@@ -2653,9 +2678,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
           window.Telegram.WebApp.disableVerticalSwipes();
         }
         if (window.Telegram.WebApp.MainButton) {
-          try {
-            window.Telegram.WebApp.MainButton.hide();
-          } catch(e) {}
+          window.Telegram.WebApp.MainButton.onClick(handleSaveButtonClick);
         }
         if (typeof centerUserLocation === 'function') {
           setTimeout(() => centerUserLocation(false), 100);
