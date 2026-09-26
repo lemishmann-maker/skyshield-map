@@ -50,6 +50,9 @@
         if (saveToast) {
           saveToast.style.top = (topInset + 52) + 'px';
         }
+        if (typeof map !== 'undefined' && map) {
+          map.invalidateSize({ pan: false });
+        }
       } catch (e) {}
     }
 
@@ -1337,7 +1340,7 @@
 
       .traffic-light-widget {
         right: 10px;
-        top: 46%;
+        top: 56%;
         transform: translateY(-50%);
       }
 
@@ -1825,6 +1828,29 @@
       "🏙 Esri Dark Canvas": esriDark,
       "🛰 Супутник (Satellite)": esriSatellite
     }, null, { position: 'topright' }).addTo(map);
+
+    // Precise centering function with container size invalidation
+    function centerUserLocation(animate = false) {
+      if (!map) return;
+      try {
+        map.invalidateSize({ pan: false });
+        const targetCoords = (presets && presets[currentPreset] && presets[currentPreset].coords) ? presets[currentPreset].coords : userCoords;
+        if (targetCoords && targetCoords.length === 2 && !isNaN(targetCoords[0]) && !isNaN(targetCoords[1])) {
+          map.setView(targetCoords, 12, { animate: animate });
+        }
+      } catch (e) {}
+    }
+
+    centerUserLocation(false);
+    setTimeout(() => centerUserLocation(false), 120);
+    setTimeout(() => centerUserLocation(false), 350);
+    setTimeout(() => centerUserLocation(false), 800);
+
+    window.addEventListener('resize', () => {
+      if (typeof map !== 'undefined' && map) {
+        map.invalidateSize({ pan: false });
+      }
+    });
 
     // Custom Pulsing Radar Marker
     const radarIcon = L.divIcon({
@@ -2354,7 +2380,10 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       // Update circle radii and UI without triggering auto-save or TTX toast
       updateRadii(null);
       updatePositions(p.coords);
-      map.panTo(p.coords);
+      
+      // Center map accurately on chosen preset location
+      map.invalidateSize({ pan: false });
+      map.setView(p.coords, 12, { animate: true });
 
       // Show informational toast matching TTX cards
       showPresetInfoToast(name);
@@ -2542,7 +2571,8 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
             document.getElementById('range-orange').value = activeP.orange;
             document.getElementById('range-red').value = activeP.red;
             updateRadii();
-            map.setView(activeP.coords, 12);
+            map.invalidateSize({ pan: false });
+            map.setView(activeP.coords, 12, { animate: false });
           }
 
           document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
@@ -2563,6 +2593,11 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         }
         if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
           window.Telegram.WebApp.disableVerticalSwipes();
+        }
+        if (typeof centerUserLocation === 'function') {
+          setTimeout(() => centerUserLocation(false), 100);
+          setTimeout(() => centerUserLocation(false), 300);
+          setTimeout(() => centerUserLocation(false), 700);
         }
       } catch (e) {
         console.warn('Telegram WebApp configuration error:', e);
