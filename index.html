@@ -1260,6 +1260,22 @@
       font-weight: 700;
       cursor: pointer;
       box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+      transition: all 0.2s;
+    }
+
+    .mcb-btn-save.btn-unlocked {
+      background: #10b981 !important;
+      color: #fff !important;
+      border: 1px solid #34d399 !important;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.6) !important;
+      animation: pulse-save 1.8s infinite alternate;
+    }
+
+    .mcb-btn-save.btn-locked {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #94a3b8 !important;
+      box-shadow: none !important;
+      border: 1px dashed rgba(255, 255, 255, 0.2) !important;
     }
 
     /* ==========================================================================
@@ -1863,6 +1879,7 @@
     let homeMarker = L.marker(userCoords, { icon: radarIcon, draggable: true }).addTo(map);
     homeMarker.dragging.disable();
     let isLocationLocked = true;
+    let hasUnsavedChanges = false;
 
     // Concentric Safety Circles: Yellow (Tactical), Orange (Standard UAV), Red (High Speed / KAB)
     let circleYellow = L.circle(userCoords, {
@@ -1967,7 +1984,12 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     homeMarker.on('dragend', function (e) {
       if (isLocationLocked) return;
       const pos = e.target.getLatLng();
+      hasUnsavedChanges = true;
       updatePositions([pos.lat, pos.lng]);
+      updateSaveButtonState();
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+        try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(err) {}
+      }
     });
 
     // Click map event
@@ -1976,7 +1998,12 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         showLockToast();
         return;
       }
+      hasUnsavedChanges = true;
       updatePositions([e.latlng.lat, e.latlng.lng]);
+      updateSaveButtonState();
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+        try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(err) {}
+      }
     });
 
     // TTX Specifications and calculation
@@ -2099,6 +2126,11 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       }
 
       if (activeZone) {
+        hasUnsavedChanges = true;
+        updateSaveButtonState();
+        if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+          try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(e) {}
+        }
         showTTXToast(activeZone);
         triggerRadiiAutoSave();
       }
@@ -2152,16 +2184,16 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const toast = document.getElementById('save-success-toast');
       const titleEl = document.querySelector('.save-toast-title');
       const descEl = document.getElementById('save-toast-desc');
-      if (titleEl) titleEl.innerText = '✓ Радіуси безпеки збережено';
+      if (titleEl) titleEl.innerText = '⚡ Радіуси оновлено';
       if (descEl) {
         const y = document.getElementById('val-yellow').innerText;
         const o = document.getElementById('val-orange').innerText;
         const r = document.getElementById('val-red').innerText;
-        descEl.innerText = `🟡 ${y} км • 🟠 ${o} км • 🔴 ${r} км`;
+        descEl.innerText = `🟡 ${y} км • 🟠 ${o} км • 🔴 ${r} км — натисніть кнопку «Зберегти»`;
       }
       if (toast) {
         toast.classList.add('visible');
-        setTimeout(() => toast.classList.remove('visible'), 2000);
+        setTimeout(() => toast.classList.remove('visible'), 2200);
       }
     }
 
@@ -2205,10 +2237,14 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
     function confirmResetLocation() {
       closeResetModal();
       isLocationLocked = false;
+      hasUnsavedChanges = true;
       if (homeMarker && homeMarker.dragging) {
         homeMarker.dragging.enable();
       }
       updateSaveButtonState();
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.enableClosingConfirmation === 'function') {
+        try { window.Telegram.WebApp.enableClosingConfirmation(); } catch(e) {}
+      }
       const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
       showToastNotice(`🗑 Локацію ${pLabel} розблоковано`, 'Оберіть нове місце на карті або перетягніть маркер, потім натисніть «Зафіксувати точку»');
     }
@@ -2217,57 +2253,103 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       const btn = document.getElementById('btn-save');
       const mcbBtn = document.getElementById('mcb-btn-save');
       const hint = document.getElementById('lock-hint-text');
-      if (isLocationLocked) {
+      const tgMb = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.MainButton) ? window.Telegram.WebApp.MainButton : null;
+
+      if (!isLocationLocked) {
+        // State 1: Location unlocked (marker draggable)
+        if (btn) {
+          btn.className = 'btn-save btn-unlocked';
+          btn.innerHTML = '💾 Зафіксувати точку та зберегти';
+        }
+        if (mcbBtn) {
+          mcbBtn.className = 'mcb-btn-save btn-unlocked';
+          mcbBtn.innerHTML = '💾 Зафіксувати';
+        }
+        if (hint) {
+          hint.innerHTML = '📍 Клікніть на потрібне місце на карті або перетягніть маркер, потім натисніть «Зафіксувати точку та зберегти»';
+        }
+        if (tgMb) {
+          tgMb.setText('💾 ЗАФІКСУВАТИ ТОЧКУ ТА ЗБЕРЕГТИ');
+          tgMb.color = '#10b981';
+          tgMb.textColor = '#ffffff';
+          tgMb.show();
+          tgMb.enable();
+        }
+      } else if (hasUnsavedChanges) {
+        // State 2: Location locked, BUT radii or preset modified
+        if (btn) {
+          btn.className = 'btn-save btn-unlocked';
+          btn.innerHTML = '💾 Зберегти нові радіуси безпеки';
+        }
+        if (mcbBtn) {
+          mcbBtn.className = 'mcb-btn-save btn-unlocked';
+          mcbBtn.innerHTML = '💾 Зберегти';
+        }
+        if (hint) {
+          hint.innerHTML = '💡 Ви змінили радіуси зон. Натисніть «Зберегти нові радіуси безпеки»';
+        }
+        if (tgMb) {
+          tgMb.setText('💾 ЗБЕРЕГТИ РАДІУСИ БЕЗПЕКИ');
+          tgMb.color = '#10b981';
+          tgMb.textColor = '#ffffff';
+          tgMb.show();
+          tgMb.enable();
+        }
+      } else {
+        // State 3: Everything saved and locked
         if (btn) {
           btn.className = 'btn-save btn-locked';
           btn.innerHTML = '🔒 Локацію зафіксовано (зміна через 🗑)';
         }
         if (mcbBtn) {
+          mcbBtn.className = 'mcb-btn-save btn-locked';
           mcbBtn.innerHTML = '🔒 Зафіксовано';
         }
         if (hint) {
           hint.innerHTML = '💡 Щоб змінити точку на карті — натисніть червону кнопку 🗑 у шапці';
         }
-      } else {
-        if (btn) {
-          btn.className = 'btn-save btn-unlocked';
-          btn.innerHTML = '💾 Зафіксувати точку';
-        }
-        if (mcbBtn) {
-          mcbBtn.innerHTML = '💾 Зафіксувати';
-        }
-        if (hint) {
-          hint.innerHTML = '📍 Клікніть на потрібне місце на карті та натисніть «Зафіксувати точку»';
+        if (tgMb) {
+          tgMb.hide();
         }
       }
     }
 
     function handleSaveButtonClick() {
-      if (isLocationLocked) {
-        openResetModal();
+      if (hasUnsavedChanges || !isLocationLocked) {
+        confirmAndSaveLocation();
       } else {
-        confirmAndLockLocation();
+        openResetModal();
       }
     }
 
-    function confirmAndLockLocation() {
+    function confirmAndSaveLocation() {
       isLocationLocked = true;
+      hasUnsavedChanges = false;
       if (homeMarker && homeMarker.dragging) {
         homeMarker.dragging.disable();
       }
       updateSaveButtonState();
 
+      if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.disableClosingConfirmation === 'function') {
+        try {
+          window.Telegram.WebApp.disableClosingConfirmation();
+        } catch(e) {}
+      }
+
+      const y = parseInt(document.getElementById('range-yellow').value);
+      const o = parseInt(document.getElementById('range-orange').value);
+      const r = parseInt(document.getElementById('range-red').value);
+
       if (presets && presets[currentPreset]) {
         presets[currentPreset].coords = [userCoords[0], userCoords[1]];
+        presets[currentPreset].yellow = y;
+        presets[currentPreset].orange = o;
+        presets[currentPreset].red = r;
       }
       try {
         localStorage.setItem(storagePresetsKey, JSON.stringify(presets));
         localStorage.setItem(storageActiveKey, currentPreset);
       } catch(e) {}
-
-      const y = parseInt(document.getElementById('range-yellow').value);
-      const o = parseInt(document.getElementById('range-orange').value);
-      const r = parseInt(document.getElementById('range-red').value);
 
       const config = {
         user_id: targetUserId,
@@ -2279,7 +2361,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
       };
 
       const pLabel = currentPreset === 'work' ? '💼 Робота' : '🏠 Дім';
-      showToastNotice(`✅ Точку ${pLabel} зафіксовано!`, `${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} • 🟠 ${o} • 🔴 ${r} км`, 3500);
+      showToastNotice(`✅ Налаштування ${pLabel} збережено!`, `${userCoords[0].toFixed(4)}, ${userCoords[1].toFixed(4)} | Радіуси: 🟡 ${y} • 🟠 ${o} • 🔴 ${r} км`, 3500);
 
       // Save via API if available (PC / local)
       if (API_BASE) {
@@ -2301,6 +2383,7 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         }
       }
     }
+    const confirmAndLockLocation = confirmAndSaveLocation;
 
     // Preset Info Toast Controller (Informational card matching TTX styling)
     let presetInfoTimer = null;
@@ -2593,6 +2676,9 @@ const MONITORED_REGIONS = {"kharkiv":[[49.8998,38.0004],[49.9091,38.0229],[49.90
         }
         if (typeof window.Telegram.WebApp.disableVerticalSwipes === 'function') {
           window.Telegram.WebApp.disableVerticalSwipes();
+        }
+        if (window.Telegram.WebApp.MainButton) {
+          window.Telegram.WebApp.MainButton.onClick(handleSaveButtonClick);
         }
         if (typeof centerUserLocation === 'function') {
           setTimeout(() => centerUserLocation(false), 100);
